@@ -82,6 +82,34 @@ alumnos[i].nombre = nuevoNombre;
 alumnos[i].direccion = nuevaDireccion;
 alumnos[i].telefono = nuevoTelefono;
 
+function mostrar(pantalla){
+document.getElementById("pantallaAlumnos").style.display="none"
+document.getElementById("pantallaPagos").style.display="none"
+document.getElementById(pantalla).style.display="block"
+mostrarPagos()
+}
+
+function mostrarPagos(){
+let lista = document.getElementById("listaPagos")
+lista.innerHTML=""
+alumnos.forEach((a,i)=>{
+let li = document.createElement("li")
+li.innerHTML = `
+<div class="card">
+<h3>${a.nombre}</h3>
+<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
+<button onclick="marcarPago(${i})">
+💰 Cambiar estado
+</button>
+
+</div>
+`
+lista.appendChild(li)
+
+})
+
+}
+
 guardarDatos();
 mostrarAlumnos();
 }
