@@ -80,6 +80,7 @@ alumnos[i].telefono=nuevoTelefono;
 
 guardarDatos();
 mostrarAlumnos();
+actualizarDashboard();
 }
 }
 
