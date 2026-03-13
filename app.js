@@ -12,6 +12,7 @@ let alumno = {nombre,direccion,telefono,pago:false};
 alumnos.push(alumno);
 guardarDatos();
 mostrarAlumnos();
+actualizarDashboard();
 
 document.getElementById("nombre").value="";
 document.getElementById("direccion").value="";
