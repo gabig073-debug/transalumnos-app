@@ -73,44 +73,63 @@ mostrarAlumnos();
 }
 
 function editarAlumno(i){
+
 let nuevoNombre = prompt("Nombre", alumnos[i].nombre);
 let nuevaDireccion = prompt("Dirección", alumnos[i].direccion);
 let nuevoTelefono = prompt("Teléfono", alumnos[i].telefono);
 
 if(nuevoNombre){
+
 alumnos[i].nombre = nuevoNombre;
 alumnos[i].direccion = nuevaDireccion;
 alumnos[i].telefono = nuevoTelefono;
 
+guardarDatos();
+mostrarAlumnos();
+
+}
+
+}
+
 function mostrar(pantalla){
-document.getElementById("pantallaAlumnos").style.display="none"
-document.getElementById("pantallaPagos").style.display="none"
-document.getElementById(pantalla).style.display="block"
-mostrarPagos()
+
+document.getElementById("pantallaAlumnos").style.display="none";
+document.getElementById("pantallaPagos").style.display="none";
+
+document.getElementById(pantalla).style.display="block";
+
+if(pantalla === "pantallaPagos"){
+mostrarPagos();
+}
+
 }
 
 function mostrarPagos(){
-let lista = document.getElementById("listaPagos")
-lista.innerHTML=""
+
+let lista = document.getElementById("listaPagos");
+
+lista.innerHTML="";
+
 alumnos.forEach((a,i)=>{
-let li = document.createElement("li")
+
+let li = document.createElement("li");
+
 li.innerHTML = `
 <div class="card">
+
 <h3>${a.nombre}</h3>
+
 <p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
+
 <button onclick="marcarPago(${i})">
 💰 Cambiar estado
 </button>
 
 </div>
-`
-lista.appendChild(li)
+`;
 
-})
+lista.appendChild(li);
 
-}
+});
 
-guardarDatos();
-mostrarAlumnos();
-}
 }
