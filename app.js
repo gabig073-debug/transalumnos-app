@@ -7,36 +7,29 @@ let nombre = document.getElementById("nombre").value;
 let direccion = document.getElementById("direccion").value;
 let telefono = document.getElementById("telefono").value;
 
-let alumno = {
-nombre,
-direccion,
-telefono,
-pago:false
-};
+let alumno = {nombre,direccion,telefono,pago:false};
 
 alumnos.push(alumno);
-
 guardarDatos();
 mostrarAlumnos();
 
-document.getElementById("nombre").value = "";
-document.getElementById("direccion").value = "";
-document.getElementById("telefono").value = "";
+document.getElementById("nombre").value="";
+document.getElementById("direccion").value="";
+document.getElementById("telefono").value="";
 }
 
 function mostrarAlumnos(){
 let lista = document.getElementById("lista");
-lista.innerHTML = "";
+lista.innerHTML="";
 
 alumnos.forEach((a,i)=>{
 let li = document.createElement("li");
 
-li.innerHTML = `
+li.innerHTML=`
 <div class="card">
 <h3>${a.nombre}</h3>
 <p>📍 ${a.direccion}</p>
 <p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
-
 <button onclick="whatsapp('${a.telefono}')">📱 Avisar</button>
 <button onclick="marcarPago(${i})">💰 ${a.pago ? "Quitar pago" : "Marcar pagado"}</button>
 <button onclick="editarAlumno(${i})">✏ Editar</button>
@@ -49,12 +42,12 @@ lista.appendChild(li);
 }
 
 function guardarDatos(){
-localStorage.setItem("alumnos", JSON.stringify(alumnos));
+localStorage.setItem("alumnos",JSON.stringify(alumnos));
 }
 
 function whatsapp(telefono){
-let mensaje = "Hola, el transporte escolar llegará pronto.";
-let url = "https://wa.me/54" + telefono + "?text=" + encodeURIComponent(mensaje);
+let mensaje="Hola, el transporte escolar llegará pronto.";
+let url="https://wa.me/54"+telefono+"?text="+encodeURIComponent(mensaje);
 window.open(url);
 }
 
@@ -67,69 +60,65 @@ mostrarAlumnos();
 }
 
 function marcarPago(i){
-alumnos[i].pago = !alumnos[i].pago;
+alumnos[i].pago=!alumnos[i].pago;
 guardarDatos();
 mostrarAlumnos();
+mostrarPagos();
+actualizarDashboard();
 }
 
 function editarAlumno(i){
-
-let nuevoNombre = prompt("Nombre", alumnos[i].nombre);
-let nuevaDireccion = prompt("Dirección", alumnos[i].direccion);
-let nuevoTelefono = prompt("Teléfono", alumnos[i].telefono);
+let nuevoNombre=prompt("Nombre",alumnos[i].nombre);
+let nuevaDireccion=prompt("Dirección",alumnos[i].direccion);
+let nuevoTelefono=prompt("Teléfono",alumnos[i].telefono);
 
 if(nuevoNombre){
-
-alumnos[i].nombre = nuevoNombre;
-alumnos[i].direccion = nuevaDireccion;
-alumnos[i].telefono = nuevoTelefono;
+alumnos[i].nombre=nuevoNombre;
+alumnos[i].direccion=nuevaDireccion;
+alumnos[i].telefono=nuevoTelefono;
 
 guardarDatos();
 mostrarAlumnos();
-
 }
-
 }
 
 function mostrar(pantalla){
-
 document.getElementById("pantallaAlumnos").style.display="none";
 document.getElementById("pantallaPagos").style.display="none";
 
 document.getElementById(pantalla).style.display="block";
 
-if(pantalla === "pantallaPagos"){
+if(pantalla==="pantallaPagos"){
 mostrarPagos();
+actualizarDashboard();
 }
-
 }
 
 function mostrarPagos(){
-
-let lista = document.getElementById("listaPagos");
-
+let lista=document.getElementById("listaPagos");
 lista.innerHTML="";
 
 alumnos.forEach((a,i)=>{
+let li=document.createElement("li");
 
-let li = document.createElement("li");
-
-li.innerHTML = `
+li.innerHTML=`
 <div class="card">
-
 <h3>${a.nombre}</h3>
-
 <p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
-
-<button onclick="marcarPago(${i})">
-💰 Cambiar estado
-</button>
-
+<button onclick="marcarPago(${i})">💰 Cambiar estado</button>
 </div>
 `;
 
 lista.appendChild(li);
-
 });
+}
 
+function actualizarDashboard(){
+let total=alumnos.length;
+let pagaron=alumnos.filter(a=>a.pago).length;
+let pendientes=total-pagaron;
+
+document.getElementById("totalAlumnos").innerText=total;
+document.getElementById("totalPagaron").innerText=pagaron;
+document.getElementById("totalPendientes").innerText=pendientes;
 }
