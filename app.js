@@ -9,11 +9,9 @@ let direccion = document.getElementById("direccion").value
 let telefono = document.getElementById("telefono").value
 
 let alumno = {
-
 nombre,
 direccion,
 telefono
-
 }
 
 alumnos.push(alumno)
@@ -25,6 +23,14 @@ mostrarAlumnos()
 }
 
 function mostrarAlumnos(){
+
+let lista = document.getElementById("lista")
+
+lista.innerHTML = ""
+
+alumnos.forEach((a)=>{
+
+let li = document.createElement("li")
 
 li.innerHTML = `
 <div class="card">
@@ -39,7 +45,6 @@ li.innerHTML = `
 
 </div>
 `
-`
 
 lista.appendChild(li)
 
@@ -49,7 +54,7 @@ lista.appendChild(li)
 
 function guardarDatos(){
 
-localStorage.setItem("alumnos",JSON.stringify(alumnos))
+localStorage.setItem("alumnos", JSON.stringify(alumnos))
 
 }
 
@@ -57,7 +62,7 @@ function whatsapp(telefono){
 
 let mensaje = "Hola, el transporte escolar llegará pronto."
 
-let url = "https://wa.me/54"+telefono+"?text="+encodeURIComponent(mensaje)
+let url = "https://wa.me/54" + telefono + "?text=" + encodeURIComponent(mensaje)
 
 window.open(url)
 
