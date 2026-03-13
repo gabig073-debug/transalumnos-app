@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TransAlumnos</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>🚐 TransAlumnos</h1>
+
+<div id="pantallaAlumnos">
+
+<h2>Agregar Alumno</h2>
+
+<input id="nombre" placeholder="Nombre del alumno">
+<input id="direccion" placeholder="Dirección">
+<input id="telefono" placeholder="Teléfono">
+
+<button onclick="agregarAlumno()">Guardar</button>
+
+<h2>Lista de alumnos</h2>
+
+<ul id="lista"></ul>
+
+</div>
+
+
+<div class="menu">
+
+<button onclick="mostrar('pantallaAlumnos')">👦 Alumnos</button>
+<button>🚐 Ruta</button>
+<button>💰 Pagos</button>
+<button>⚙</button>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
