@@ -11,7 +11,8 @@ let telefono = document.getElementById("telefono").value
 let alumno = {
 nombre,
 direccion,
-telefono
+telefono,
+pago:false
 }
 
 alumnos.push(alumno)
