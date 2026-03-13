@@ -26,22 +26,19 @@ mostrarAlumnos()
 
 function mostrarAlumnos(){
 
-let lista = document.getElementById("lista")
-
-lista.innerHTML = ""
-
-alumnos.forEach((a,i)=>{
-
-let li = document.createElement("li")
-
 li.innerHTML = `
-<b>${a.nombre}</b><br>
-${a.direccion}<br>
+<div class="card">
+
+<h3>${a.nombre}</h3>
+
+<p>📍 ${a.direccion}</p>
 
 <button onclick="whatsapp('${a.telefono}')">
 📱 Avisar
 </button>
 
+</div>
+`
 `
 
 lista.appendChild(li)
