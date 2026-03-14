@@ -85,14 +85,16 @@ actualizarDashboard();
 }
 
 function mostrar(pantalla){
-document.getElementById("pantallaAlumnos").style.display="none";
-document.getElementById("pantallaPagos").style.display="none";
-
-document.getElementById(pantalla).style.display="block";
-
+document.getElementById("pantallaInicio").style.display="none"
+document.getElementById("pantallaAlumnos").style.display="none"
+document.getElementById("pantallaPagos").style.display="none"
+document.getElementById("pantallaRuta").style.display="none"
+document.getElementById(pantalla).style.display="block"
 if(pantalla==="pantallaPagos"){
-mostrarPagos();
-actualizarDashboard();
+mostrarPagos()
+}
+if(pantalla==="pantallaRuta"){
+mostrarRuta()
 }
 }
 
@@ -113,6 +115,47 @@ li.innerHTML=`
 
 lista.appendChild(li);
 });
+}
+
+function mostrarRuta(){
+let lista = document.getElementById("listaRuta")
+lista.innerHTML=""
+alumnos.forEach((a,i)=>{
+let li = document.createElement("li")
+
+li.innerHTML = `
+<div class="card">
+<h3>${i+1}. ${a.nombre}</h3>
+<p>📍 ${a.direccion}</p>
+
+<button onclick="subir(${i})">⬆</button>
+<button onclick="bajar(${i})">⬇</button>
+</div>
+`
+lista.appendChild(li)
+
+})
+
+}
+
+function subir(i){
+if(i>0){
+let temp = alumnos[i]
+alumnos[i] = alumnos[i-1]
+alumnos[i-1] = temp
+guardarDatos()
+mostrarRuta()
+}
+}
+
+function bajar(i){
+if(i < alumnos.length-1){
+let temp = alumnos[i]
+alumnos[i] = alumnos[i+1]
+alumnos[i+1] = temp
+guardarDatos()
+mostrarRuta()
+}
 }
 
 function actualizarDashboard(){
