@@ -277,12 +277,22 @@ document.getElementById("mapa").src = url
 
 },
 (error)=>{
-alert("Error obteniendo ubicación")
+
+if(error.code === 1){
+alert("❌ Permiso de ubicación denegado")
+}
+else if(error.code === 2){
+alert("❌ No se pudo obtener ubicación")
+}
+else if(error.code === 3){
+alert("⏳ Tiempo de espera agotado (activá GPS)")
+}
+
 },
 {
 enableHighAccuracy:true,
 maximumAge:0,
-timeout:5000
+timeout:20000
 })
 
 }
