@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>TransAlumnos</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
+<div class="app">
+
 <h1>🚐 TransAlumnos</h1>
 
+<!-- INICIO -->
 <div id="pantallaInicio" class="container">
+
 <h2>📊 Panel de Control</h2>
 
 <div class="card">
@@ -22,8 +30,9 @@
 
 </div>
 
-  
-<div id="pantallaAlumnos" style="display:none">
+<!-- ALUMNOS -->
+<div id="pantallaAlumnos" style="display:none" class="container">
+
 <h2>Agregar Alumno</h2>
 
 <input id="nombre" placeholder="Nombre del alumno">
@@ -34,25 +43,37 @@
 
 <h2>Lista de alumnos</h2>
 <ul id="lista"></ul>
+
 </div>
 
+<!-- PAGOS -->
 <div id="pantallaPagos" style="display:none" class="container">
+
 <h2>💰 Control de Pagos</h2>
+
 <ul id="listaPagos"></ul>
+
 </div>
 
+<!-- RUTA -->
 <div id="pantallaRuta" style="display:none" class="container">
+
 <h2>🚐 Ruta de Viaje</h2>
+
 <ul id="listaRuta"></ul>
+
 </div>
 
+<!-- MENU -->
 <div class="menu">
 
-<button onclick="mostrar('pantallaInicio')">🏠 Inicio</button>
-<button onclick="mostrar('pantallaAlumnos')">👦 Alumnos</button>
-<button onclick="mostrar('pantallaPagos')">💰 Pagos</button>
-<button onclick="mostrar('pantallaRuta')">🚐 Ruta</button>
-<button>⚙</button>
+<button onclick="mostrar('pantallaInicio')">🏠</button>
+<button onclick="mostrar('pantallaAlumnos')">👦</button>
+<button onclick="mostrar('pantallaRuta')">🚐</button>
+<button onclick="mostrar('pantallaPagos')">💰</button>
+
+</div>
+
 </div>
 
 <script src="app.js"></script>
