@@ -1,16 +1,28 @@
 body{
-font-family: Arial;
 margin:0;
-background:#f2f2f2;
-padding-bottom:70px;
+font-family: Arial;
+background:#ccc;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.app{
+width:360px;
+height:640px;
+background:white;
+border-radius:20px;
+overflow:auto;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
 }
 
 h1{
-text-align:center;
 background:#2196F3;
 color:white;
 padding:15px;
 margin:0;
+text-align:center;
 }
 
 .container{
@@ -19,14 +31,15 @@ padding:15px;
 
 input{
 width:100%;
-padding:12px;
-margin:8px 0;
+padding:10px;
+margin:5px 0;
 border-radius:6px;
 border:1px solid #ccc;
 }
 
 button{
-padding:10px 15px;
+padding:8px;
+margin:5px 2px;
 border:none;
 border-radius:6px;
 background:#2196F3;
@@ -34,33 +47,25 @@ color:white;
 }
 
 .card{
-
 background:white;
-padding:15px;
+padding:10px;
 margin:10px 0;
 border-radius:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.2);
-
 }
 
 .menu{
-
-position:fixed;
+position:sticky;
 bottom:0;
-left:0;
-width:100%;
 background:white;
 display:flex;
 justify-content:space-around;
-border-top:1px solid #ccc;
 padding:10px;
-
+border-top:1px solid #ccc;
 }
 
 .menu button{
-
 background:none;
 color:black;
-font-size:16px;
-
+font-size:18px;
 }
