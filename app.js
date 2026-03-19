@@ -268,10 +268,18 @@ let lon = pos.coords.longitude
 document.getElementById("ubicacion").innerText =
 "Lat: " + lat + " | Lon: " + lon
 
-let url = "https://maps.google.com/maps?q=" + lat + "," + lon + "&z=15&output=embed"
+let url = "https://maps.google.com/maps?q=" + lat + "," + lon + "&z=18&output=embed"
 
 document.getElementById("mapa").src = url
 
+},
+(error)=>{
+alert("Error obteniendo ubicación")
+},
+{
+enableHighAccuracy: true,
+maximumAge: 0,
+timeout: 5000
 })
 
 }
