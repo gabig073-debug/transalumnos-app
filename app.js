@@ -1,5 +1,8 @@
 let alumnos = JSON.parse(localStorage.getItem("alumnos")) || []
 
+let latActual = null
+let lonActual = null
+
 mostrarAlumnos()
 actualizarDashboard()
 
@@ -262,13 +265,13 @@ return
 
 navigator.geolocation.watchPosition((pos)=>{
 
-let lat = pos.coords.latitude
-let lon = pos.coords.longitude
+latActual = pos.coords.latitude
+lonActual = pos.coords.longitude
 
 document.getElementById("ubicacion").innerText =
-"Lat: " + lat + " | Lon: " + lon
+"Lat: " + latActual + " | Lon: " + lonActual
 
-let url = "https://maps.google.com/maps?q=" + lat + "," + lon + "&z=18&output=embed"
+let url = "https://maps.google.com/maps?q=" + latActual + "," + lonActual + "&z=18&output=embed"
 
 document.getElementById("mapa").src = url
 
@@ -277,9 +280,23 @@ document.getElementById("mapa").src = url
 alert("Error obteniendo ubicación")
 },
 {
-enableHighAccuracy: true,
-maximumAge: 0,
-timeout: 5000
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:5000
 })
+
+}
+
+/* ABRIR EN GOOGLE MAPS */
+function abrirEnMapa(){
+
+if(latActual === null){
+alert("Esperando ubicación...")
+return
+}
+
+let url = "https://www.google.com/maps?q=" + latActual + "," + lonActual
+
+window.open(url)
 
 }
