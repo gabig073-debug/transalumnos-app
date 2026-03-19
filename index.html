@@ -19,7 +19,6 @@
 
 <!-- INICIO -->
 <div id="pantallaInicio" class="container">
-
 <h2>📊 Panel de Control</h2>
 
 <div class="card">
@@ -27,7 +26,6 @@
 <p>Pagaron: <b id="totalPagaron">0</b></p>
 <p>Pendientes: <b id="totalPendientes">0</b></p>
 </div>
-
 </div>
 
 <!-- ALUMNOS -->
@@ -48,11 +46,8 @@
 
 <!-- PAGOS -->
 <div id="pantallaPagos" style="display:none" class="container">
-
 <h2>💰 Control de Pagos</h2>
-
 <ul id="listaPagos"></ul>
-
 </div>
 
 <!-- RUTA -->
@@ -60,7 +55,20 @@
 
 <h2>🚐 Ruta de Viaje</h2>
 
+<button onclick="iniciarRuta()">🗺 Iniciar recorrido</button>
+
 <ul id="listaRuta"></ul>
+
+</div>
+
+<!-- GPS -->
+<div id="pantallaGPS" style="display:none" class="container">
+
+<h2>📍 Ubicación en tiempo real</h2>
+
+<p id="ubicacion">Obteniendo ubicación...</p>
+
+<iframe id="mapa" width="100%" height="300"></iframe>
 
 </div>
 
@@ -71,6 +79,7 @@
 <button onclick="mostrar('pantallaAlumnos')">👦</button>
 <button onclick="mostrar('pantallaRuta')">🚐</button>
 <button onclick="mostrar('pantallaPagos')">💰</button>
+<button onclick="mostrar('pantallaGPS')">📍</button>
 
 </div>
 
