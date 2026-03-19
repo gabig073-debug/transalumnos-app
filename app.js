@@ -44,9 +44,11 @@ li.innerHTML = `
 
 <p>📍 ${a.direccion}</p>
 
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
+<p class="${a.pago ? 'pagado' : 'pendiente'}">
+${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
+</p>
 
-<button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱 Avisar</button>
+<button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱</button>
 <button onclick="marcarPago(${i})">💰</button>
 <button onclick="editarAlumno(${i})">✏</button>
 <button onclick="eliminarAlumno(${i})">🗑</button>
@@ -74,7 +76,9 @@ li.innerHTML = `
 
 <h3>${a.nombre}</h3>
 
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
+<p class="${a.pago ? 'pagado' : 'pendiente'}">
+${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
+</p>
 
 <button onclick="marcarPago(${i})">
 💰 Cambiar estado
@@ -123,11 +127,13 @@ document.getElementById("pantallaInicio").style.display="none"
 document.getElementById("pantallaAlumnos").style.display="none"
 document.getElementById("pantallaPagos").style.display="none"
 document.getElementById("pantallaRuta").style.display="none"
+document.getElementById("pantallaGPS").style.display="none"
 
 document.getElementById(pantalla).style.display="block"
 
 if(pantalla==="pantallaPagos") mostrarPagos()
 if(pantalla==="pantallaRuta") mostrarRuta()
+if(pantalla==="pantallaGPS") iniciarGPS()
 
 }
 
@@ -227,5 +233,45 @@ let pendientes = total - pagaron
 document.getElementById("totalAlumnos").innerText = total
 document.getElementById("totalPagaron").innerText = pagaron
 document.getElementById("totalPendientes").innerText = pendientes
+
+}
+
+/* MAPA RUTA */
+function iniciarRuta(){
+
+if(alumnos.length === 0){
+alert("No hay alumnos cargados")
+return
+}
+
+let direcciones = alumnos.map(a => a.direccion)
+
+let url = "https://www.google.com/maps/dir/" + direcciones.join("/")
+
+window.open(url)
+
+}
+
+/* GPS EN TIEMPO REAL */
+function iniciarGPS(){
+
+if(!navigator.geolocation){
+alert("GPS no disponible")
+return
+}
+
+navigator.geolocation.watchPosition((pos)=>{
+
+let lat = pos.coords.latitude
+let lon = pos.coords.longitude
+
+document.getElementById("ubicacion").innerText =
+"Lat: " + lat + " | Lon: " + lon
+
+let url = "https://maps.google.com/maps?q=" + lat + "," + lon + "&z=15&output=embed"
+
+document.getElementById("mapa").src = url
+
+})
 
 }
