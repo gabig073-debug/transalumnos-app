@@ -233,22 +233,21 @@ alert("No hay alumnos")
 return
 }
 
-// 🚨 si todavía no hay GPS
-if(latActual === null){
-alert("Esperando ubicación GPS...")
-return
-}
+navigator.geolocation.getCurrentPosition((pos)=>{
 
-// 📍 punto de partida = tu ubicación
-let origen = latActual + "," + lonActual
+let lat = pos.coords.latitude
+let lon = pos.coords.longitude
 
-// 📍 destinos = direcciones de alumnos
+let origen = lat + "," + lon
 let destinos = alumnos.map(a => a.direccion)
 
-// 🚀 armar ruta completa
 let url = "https://www.google.com/maps/dir/" + origen + "/" + destinos.join("/")
 
 window.open(url)
+
+}, ()=>{
+alert("No se pudo obtener ubicación")
+})
 
 }
 
