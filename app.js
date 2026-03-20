@@ -43,7 +43,6 @@ actualizarDashboard()
 document.getElementById("nombre").value=""
 document.getElementById("direccion").value=""
 document.getElementById("telefono").value=""
-
 }
 
 // 📋 MOSTRAR ALUMNOS
@@ -72,9 +71,7 @@ ${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
 `
 
 lista.appendChild(li)
-
 })
-
 }
 
 // 💰 PAGOS
@@ -98,9 +95,7 @@ ${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
 `
 
 lista.appendChild(li)
-
 })
-
 }
 
 // 🚐 RUTA
@@ -123,9 +118,7 @@ li.innerHTML = `
 `
 
 lista.appendChild(li)
-
 })
-
 }
 
 // 🔄 CAMBIAR PANTALLA
@@ -142,7 +135,6 @@ document.getElementById(pantalla).style.display="block"
 if(pantalla==="pantallaPagos") mostrarPagos()
 if(pantalla==="pantallaRuta") mostrarRuta()
 if(pantalla==="pantallaGPS") iniciarGPS()
-
 }
 
 // 💾 GUARDAR
@@ -222,7 +214,6 @@ let pendientes = total - pagaron
 document.getElementById("totalAlumnos").innerText = total
 document.getElementById("totalPagaron").innerText = pagaron
 document.getElementById("totalPendientes").innerText = pendientes
-
 }
 
 // 🗺 RUTA EN GOOGLE MAPS
@@ -248,15 +239,16 @@ window.open(url)
 }, ()=>{
 alert("No se pudo obtener ubicación")
 })
-
 }
+
+// 📡 GPS EN VIVO (ARREGLADO)
+function iniciarGPS(){
 
 navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
-// 🔥 GUARDAR EN FIREBASE
 db.ref("ubicacion").set({
 lat: latActual,
 lon: lonActual,
@@ -291,5 +283,4 @@ return
 
 let url = "https://www.google.com/maps?q=" + latActual + "," + lonActual
 window.open(url)
-
 }
