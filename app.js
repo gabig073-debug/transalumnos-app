@@ -227,21 +227,29 @@ document.getElementById("totalPendientes").innerText = pendientes
 
 // 🗺 RUTA EN GOOGLE MAPS
 function iniciarRuta(){
+
 if(alumnos.length === 0){
 alert("No hay alumnos")
 return
 }
-let direcciones = alumnos.map(a => a.direccion)
-let url = "https://www.google.com/maps/dir/" + direcciones.join("/")
-window.open(url)
+
+// 🚨 si todavía no hay GPS
+if(latActual === null){
+alert("Esperando ubicación GPS...")
+return
 }
 
-// 📍 GPS + FIREBASE
-function iniciarGPS(){
+// 📍 punto de partida = tu ubicación
+let origen = latActual + "," + lonActual
 
-if(!navigator.geolocation){
-alert("GPS no disponible")
-return
+// 📍 destinos = direcciones de alumnos
+let destinos = alumnos.map(a => a.direccion)
+
+// 🚀 armar ruta completa
+let url = "https://www.google.com/maps/dir/" + origen + "/" + destinos.join("/")
+
+window.open(url)
+
 }
 
 navigator.geolocation.watchPosition((pos)=>{
