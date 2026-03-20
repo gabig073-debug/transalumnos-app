@@ -13,12 +13,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // 🔧 VARIABLES
-let alumnos = JSON.parse(localStorage.getItem("alumnos")) || []
+let alumnos = []
 let latActual = null
 let lonActual = null
 
-mostrarAlumnos()
-actualizarDashboard()
+// 🔥 CARGAR DATOS DESDE FIREBASE EN TIEMPO REAL
+db.ref("alumnos").on("value", (snapshot) => {
+  let data = snapshot.val()
+  alumnos = data ? data : []
+
+  mostrarAlumnos()
+  actualizarDashboard()
+})
 
 // 👦 AGREGAR ALUMNO
 function agregarAlumno(){
@@ -26,6 +32,11 @@ function agregarAlumno(){
 let nombre = document.getElementById("nombre").value
 let direccion = document.getElementById("direccion").value
 let telefono = document.getElementById("telefono").value
+
+if(!nombre || !direccion || !telefono){
+alert("Completá todos los campos")
+return
+}
 
 let alumno = {
 nombre,
@@ -35,14 +46,16 @@ pago:false
 }
 
 alumnos.push(alumno)
-
 guardarDatos()
-mostrarAlumnos()
-actualizarDashboard()
 
 document.getElementById("nombre").value=""
 document.getElementById("direccion").value=""
 document.getElementById("telefono").value=""
+}
+
+// 💾 GUARDAR EN FIREBASE
+function guardarDatos(){
+db.ref("alumnos").set(alumnos)
 }
 
 // 📋 MOSTRAR ALUMNOS
@@ -137,11 +150,6 @@ if(pantalla==="pantallaRuta") mostrarRuta()
 if(pantalla==="pantallaGPS") iniciarGPS()
 }
 
-// 💾 GUARDAR
-function guardarDatos(){
-localStorage.setItem("alumnos", JSON.stringify(alumnos))
-}
-
 // 📱 WHATSAPP
 function whatsapp(nombre,telefono){
 let mensaje = "Hola, estamos llegando por " + nombre
@@ -154,8 +162,6 @@ function eliminarAlumno(i){
 if(confirm("¿Eliminar alumno?")){
 alumnos.splice(i,1)
 guardarDatos()
-mostrarAlumnos()
-actualizarDashboard()
 }
 }
 
@@ -163,8 +169,6 @@ actualizarDashboard()
 function marcarPago(i){
 alumnos[i].pago = !alumnos[i].pago
 guardarDatos()
-mostrarAlumnos()
-actualizarDashboard()
 }
 
 // ✏ EDITAR
@@ -177,9 +181,7 @@ if(nuevoNombre){
 alumnos[i].nombre = nuevoNombre
 alumnos[i].direccion = nuevaDireccion
 alumnos[i].telefono = nuevoTelefono
-
 guardarDatos()
-mostrarAlumnos()
 }
 }
 
@@ -190,7 +192,6 @@ let temp = alumnos[i]
 alumnos[i] = alumnos[i-1]
 alumnos[i-1] = temp
 guardarDatos()
-mostrarRuta()
 }
 }
 
@@ -200,7 +201,6 @@ let temp = alumnos[i]
 alumnos[i] = alumnos[i+1]
 alumnos[i+1] = temp
 guardarDatos()
-mostrarRuta()
 }
 }
 
@@ -216,7 +216,7 @@ document.getElementById("totalPagaron").innerText = pagaron
 document.getElementById("totalPendientes").innerText = pendientes
 }
 
-// 🗺 RUTA EN GOOGLE MAPS
+// 🗺 RUTA GOOGLE MAPS
 function iniciarRuta(){
 
 if(alumnos.length === 0){
@@ -236,12 +236,10 @@ let url = "https://www.google.com/maps/dir/" + origen + "/" + destinos.join("/")
 
 window.open(url)
 
-}, ()=>{
-alert("No se pudo obtener ubicación")
 })
 }
 
-// 📡 GPS EN VIVO (ARREGLADO)
+// 📡 GPS EN VIVO
 function iniciarGPS(){
 
 navigator.geolocation.watchPosition((pos)=>{
@@ -259,7 +257,6 @@ document.getElementById("ubicacion").innerText =
 "Lat: " + latActual + " | Lon: " + lonActual
 
 let url = "https://maps.google.com/maps?q=" + latActual + "," + lonActual + "&z=18&output=embed"
-
 document.getElementById("mapa").src = url
 
 },
@@ -267,13 +264,11 @@ document.getElementById("mapa").src = url
 alert("Error GPS")
 },
 {
-enableHighAccuracy:true,
-timeout:20000
+enableHighAccuracy:true
 })
-
 }
 
-// 📍 ABRIR MAPA REAL
+// 📍 ABRIR MAPA
 function abrirEnMapa(){
 
 if(latActual === null){
