@@ -12,40 +12,35 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔧 VARIABLES
 let alumnos = []
 let latActual = null
 let lonActual = null
 
-// 🔥 CARGAR DATOS DESDE FIREBASE EN TIEMPO REAL
+// 🔥 CARGAR ALUMNOS EN TIEMPO REAL
 db.ref("alumnos").on("value", (snapshot) => {
-  let data = snapshot.val()
-  alumnos = data ? data : []
-
+  alumnos = snapshot.val() || []
   mostrarAlumnos()
   actualizarDashboard()
 })
 
-// 👦 AGREGAR ALUMNO
+// 👦 AGREGAR
 function agregarAlumno(){
-
 let nombre = document.getElementById("nombre").value
 let direccion = document.getElementById("direccion").value
 let telefono = document.getElementById("telefono").value
 
 if(!nombre || !direccion || !telefono){
-alert("Completá todos los campos")
+alert("Completá todo")
 return
 }
 
-let alumno = {
+alumnos.push({
 nombre,
 direccion,
 telefono,
 pago:false
-}
+})
 
-alumnos.push(alumno)
 guardarDatos()
 
 document.getElementById("nombre").value=""
@@ -53,28 +48,24 @@ document.getElementById("direccion").value=""
 document.getElementById("telefono").value=""
 }
 
-// 💾 GUARDAR EN FIREBASE
+// 💾 GUARDAR
 function guardarDatos(){
 db.ref("alumnos").set(alumnos)
 }
 
-// 📋 MOSTRAR ALUMNOS
+// 📋 MOSTRAR
 function mostrarAlumnos(){
-
 let lista = document.getElementById("lista")
 lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
-
 let li = document.createElement("li")
 
 li.innerHTML = `
 <div class="card">
 <h3>${a.nombre}</h3>
-<p>📍 ${a.direccion}</p>
-<p class="${a.pago ? 'pagado' : 'pendiente'}">
-${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
-</p>
+<p>${a.direccion}</p>
+<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
 
 <button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱</button>
 <button onclick="marcarPago(${i})">💰</button>
@@ -89,21 +80,17 @@ lista.appendChild(li)
 
 // 💰 PAGOS
 function mostrarPagos(){
-
 let lista = document.getElementById("listaPagos")
 lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
-
 let li = document.createElement("li")
 
 li.innerHTML = `
 <div class="card">
 <h3>${a.nombre}</h3>
-<p class="${a.pago ? 'pagado' : 'pendiente'}">
-${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}
-</p>
-<button onclick="marcarPago(${i})">💰 Cambiar estado</button>
+<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
+<button onclick="marcarPago(${i})">Cambiar</button>
 </div>
 `
 
@@ -113,20 +100,16 @@ lista.appendChild(li)
 
 // 🚐 RUTA
 function mostrarRuta(){
-
 let lista = document.getElementById("listaRuta")
 lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
-
 let li = document.createElement("li")
 
 li.innerHTML = `
 <div class="card">
 <h3>${i+1}. ${a.nombre}</h3>
-<p>📍 ${a.direccion}</p>
-<button onclick="subir(${i})">⬆</button>
-<button onclick="bajar(${i})">⬇</button>
+<p>${a.direccion}</p>
 </div>
 `
 
@@ -134,114 +117,70 @@ lista.appendChild(li)
 })
 }
 
-// 🔄 CAMBIAR PANTALLA
-function mostrar(pantalla){
+// 🔄 PANTALLAS
+function mostrar(p){
 
 document.getElementById("pantallaInicio").style.display="none"
 document.getElementById("pantallaAlumnos").style.display="none"
 document.getElementById("pantallaPagos").style.display="none"
 document.getElementById("pantallaRuta").style.display="none"
 document.getElementById("pantallaGPS").style.display="none"
+document.getElementById("pantallaPadres").style.display="none"
 
-document.getElementById(pantalla).style.display="block"
+document.getElementById(p).style.display="block"
 
-if(pantalla==="pantallaPagos") mostrarPagos()
-if(pantalla==="pantallaRuta") mostrarRuta()
-if(pantalla==="pantallaGPS") iniciarGPS()
+if(p==="pantallaPagos") mostrarPagos()
+if(p==="pantallaRuta") mostrarRuta()
+if(p==="pantallaGPS") iniciarGPS()
+if(p==="pantallaPadres") iniciarPadres()
 }
 
 // 📱 WHATSAPP
 function whatsapp(nombre,telefono){
-let mensaje = "Hola, estamos llegando por " + nombre
-let url = "https://wa.me/54" + telefono + "?text=" + encodeURIComponent(mensaje)
+let url = "https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos llegando por "+nombre)
 window.open(url)
 }
 
-// 🗑 ELIMINAR
+// 🗑
 function eliminarAlumno(i){
-if(confirm("¿Eliminar alumno?")){
+if(confirm("Eliminar?")){
 alumnos.splice(i,1)
 guardarDatos()
 }
 }
 
-// 💰 PAGO
+// 💰
 function marcarPago(i){
 alumnos[i].pago = !alumnos[i].pago
 guardarDatos()
 }
 
-// ✏ EDITAR
+// ✏
 function editarAlumno(i){
-let nuevoNombre = prompt("Nombre", alumnos[i].nombre)
-let nuevaDireccion = prompt("Dirección", alumnos[i].direccion)
-let nuevoTelefono = prompt("Teléfono", alumnos[i].telefono)
-
-if(nuevoNombre){
-alumnos[i].nombre = nuevoNombre
-alumnos[i].direccion = nuevaDireccion
-alumnos[i].telefono = nuevoTelefono
+let n = prompt("Nombre", alumnos[i].nombre)
+if(n){
+alumnos[i].nombre = n
 guardarDatos()
 }
 }
 
-// 🔼 ORDEN
-function subir(i){
-if(i>0){
-let temp = alumnos[i]
-alumnos[i] = alumnos[i-1]
-alumnos[i-1] = temp
-guardarDatos()
-}
-}
-
-function bajar(i){
-if(i < alumnos.length-1){
-let temp = alumnos[i]
-alumnos[i] = alumnos[i+1]
-alumnos[i+1] = temp
-guardarDatos()
-}
-}
-
-// 📊 DASHBOARD
+// 📊
 function actualizarDashboard(){
-
-let total = alumnos.length
-let pagaron = alumnos.filter(a => a.pago).length
-let pendientes = total - pagaron
-
-document.getElementById("totalAlumnos").innerText = total
-document.getElementById("totalPagaron").innerText = pagaron
-document.getElementById("totalPendientes").innerText = pendientes
+document.getElementById("totalAlumnos").innerText = alumnos.length
+document.getElementById("totalPagaron").innerText = alumnos.filter(a=>a.pago).length
+document.getElementById("totalPendientes").innerText = alumnos.filter(a=>!a.pago).length
 }
 
-// 🗺 RUTA GOOGLE MAPS
+// 🗺 RUTA REAL
 function iniciarRuta(){
-
-if(alumnos.length === 0){
-alert("No hay alumnos")
-return
-}
-
 navigator.geolocation.getCurrentPosition((pos)=>{
-
-let lat = pos.coords.latitude
-let lon = pos.coords.longitude
-
-let origen = lat + "," + lon
-let destinos = alumnos.map(a => a.direccion)
-
-let url = "https://www.google.com/maps/dir/" + origen + "/" + destinos.join("/")
-
+let url = "https://www.google.com/maps/dir/"+pos.coords.latitude+","+pos.coords.longitude+"/"+alumnos.map(a=>a.direccion).join("/")
 window.open(url)
-
 })
 }
 
-// 📡 GPS EN VIVO
+// 📡 GPS CHOFER
 function iniciarGPS(){
-
 navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
@@ -249,33 +188,39 @@ lonActual = pos.coords.longitude
 
 db.ref("ubicacion").set({
 lat: latActual,
-lon: lonActual,
-time: Date.now()
+lon: lonActual
 })
 
 document.getElementById("ubicacion").innerText =
-"Lat: " + latActual + " | Lon: " + lonActual
+latActual + "," + lonActual
 
-let url = "https://maps.google.com/maps?q=" + latActual + "," + lonActual + "&z=18&output=embed"
-document.getElementById("mapa").src = url
+document.getElementById("mapa").src =
+"https://maps.google.com/maps?q="+latActual+","+lonActual+"&z=16&output=embed"
 
-},
-(error)=>{
-alert("Error GPS")
-},
-{
-enableHighAccuracy:true
 })
 }
 
-// 📍 ABRIR MAPA
-function abrirEnMapa(){
+// 👨‍👩‍👧 PADRES
+function iniciarPadres(){
 
-if(latActual === null){
-alert("Esperando ubicación...")
-return
+db.ref("ubicacion").on("value",(snap)=>{
+
+let data = snap.val()
+if(!data) return
+
+let lat = data.lat
+let lon = data.lon
+
+document.getElementById("ubicacionPadres").innerText =
+lat + "," + lon
+
+document.getElementById("mapaPadres").src =
+"https://maps.google.com/maps?q="+lat+","+lon+"&z=16&output=embed"
+
+})
 }
 
-let url = "https://www.google.com/maps?q=" + latActual + "," + lonActual
-window.open(url)
+// 📍
+function abrirEnMapa(){
+window.open("https://www.google.com/maps?q="+latActual+","+lonActual)
 }
