@@ -1,8 +1,8 @@
 {
   "name": "TransAlumnos",
   "short_name": "Trans",
-  "start_url": "/transalumnos/",
-  "scope": "/transalumnos/"
+  "start_url": "/transporteyali/",
+  "scope": "/transporteyali/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2196F3",
