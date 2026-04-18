@@ -2,23 +2,20 @@ body{
 margin:0;
 font-family: Arial;
 font-size:14px;
-background:#ccc;
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
+background:#fff;
 }
 
-/* 📱 CONTENEDOR APP */
+/* 📱 APP PANTALLA COMPLETA REAL */
 .app{
 width:100%;
-max-width:360px;
-height:640px;
+height:100vh;
 background:white;
-border-radius:20px;
 overflow:hidden;
-box-shadow:0 0 20px rgba(0,0,0,0.3);
-position:relative;
+position:fixed;
+top:0;
+left:0;
+display:flex;
+flex-direction:column;
 }
 
 /* HEADER */
@@ -33,10 +30,10 @@ font-size:18px;
 
 /* CONTENIDO */
 .container{
+flex:1;
 padding:15px;
 padding-bottom:80px;
 overflow-y:auto;
-height:calc(100% - 60px);
 }
 
 /* TEXTOS */
@@ -88,7 +85,7 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2);
 
 /* MENÚ INFERIOR */
 .menu{
-position:absolute;
+position:fixed;
 bottom:0;
 left:0;
 width:100%;
