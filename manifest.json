@@ -1,8 +1,8 @@
 {
   "name": "TransAlumnos",
   "short_name": "Trans",
-  "start_url": "/NOMBRE-DE-TU-REPO/",
-  "scope": "/NOMBRE-DE-TU-REPO/",
+  "start_url": "/transalumnos/",
+  "scope": "/transalumnos/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2196F3",
