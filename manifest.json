@@ -1,9 +1,10 @@
 {
   "name": "TransAlumnos",
   "short_name": "Trans",
-  "start_url": "/transalumnos-app/",
+  "start_url": "/transalumnos-app/index.html",
   "scope": "/transalumnos-app/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2196F3",
   "icons": [
