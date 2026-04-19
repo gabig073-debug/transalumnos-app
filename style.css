@@ -10,6 +10,7 @@ min-height:100vh;
 
 /* 📱 APP */
 .app{
+position:relative;
 width:100%;
 max-width:360px;
 height:640px;
