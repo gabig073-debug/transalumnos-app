@@ -1,12 +1,9 @@
 // 🔥 FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyBCd1wAUZo2HVUT-1-YuXgMukHlQP8I0Xo",
-  authDomain: "transalumnos-7841c.firebaseapp.com",
-  databaseURL: "https://transalumnos-7841c-default-rtdb.firebaseio.com",
-  projectId: "transalumnos-7841c",
-  storageBucket: "transalumnos-7841c.firebasestorage.app",
-  messagingSenderId: "979657843687",
-  appId: "1:979657843687:web:1e34083ad4f4905f159342"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_DOMINIO",
+  databaseURL: "TU_DATABASE_URL",
+  projectId: "TU_PROJECT_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -15,9 +12,8 @@ const db = firebase.database();
 let alumnos = []
 let latActual = null
 let lonActual = null
-let watchID = null // 🔥 evita duplicar GPS
 
-// 🔥 CARGAR DATOS
+// 🔥 CARGAR ALUMNOS
 db.ref("alumnos").on("value", (snapshot) => {
   alumnos = snapshot.val() || []
   mostrarAlumnos()
@@ -26,30 +22,32 @@ db.ref("alumnos").on("value", (snapshot) => {
 
 // 👦 AGREGAR
 function agregarAlumno(){
-let nombre = nombreInput.value
-let direccion = direccionInput.value
-let telefono = telefonoInput.value
+let nombre = document.getElementById("nombre").value
+let direccion = document.getElementById("direccion").value
+let telefono = document.getElementById("telefono").value
 
 if(!nombre || !direccion || !telefono){
 alert("Completá todo")
 return
 }
 
-alumnos.push({nombre,direccion,telefono,pago:false})
+alumnos.push({ nombre, direccion, telefono })
+
 guardarDatos()
 
-nombreInput.value=""
-direccionInput.value=""
-telefonoInput.value=""
+document.getElementById("nombre").value=""
+document.getElementById("direccion").value=""
+document.getElementById("telefono").value=""
 }
 
-// 💾
+// 💾 GUARDAR
 function guardarDatos(){
 db.ref("alumnos").set(alumnos)
 }
 
-// 📋
+// 📋 MOSTRAR
 function mostrarAlumnos(){
+let lista = document.getElementById("lista")
 lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
@@ -59,10 +57,8 @@ li.innerHTML = `
 <div class="card">
 <h3>${a.nombre}</h3>
 <p>${a.direccion}</p>
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
 
 <button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱</button>
-<button onclick="marcarPago(${i})">💰</button>
 <button onclick="editarAlumno(${i})">✏</button>
 <button onclick="eliminarAlumno(${i})">🗑</button>
 </div>
@@ -72,28 +68,10 @@ lista.appendChild(li)
 })
 }
 
-// 💰
-function mostrarPagos(){
-listaPagos.innerHTML=""
-
-alumnos.forEach((a,i)=>{
-let li = document.createElement("li")
-
-li.innerHTML = `
-<div class="card">
-<h3>${a.nombre}</h3>
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
-<button onclick="marcarPago(${i})">Cambiar</button>
-</div>
-`
-
-listaPagos.appendChild(li)
-})
-}
-
-// 🚐
+// 🚐 RUTA
 function mostrarRuta(){
-listaRuta.innerHTML=""
+let lista = document.getElementById("listaRuta")
+lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
 let li = document.createElement("li")
@@ -105,26 +83,30 @@ li.innerHTML = `
 </div>
 `
 
-listaRuta.appendChild(li)
+lista.appendChild(li)
 })
 }
 
-// 🔄
+// 🔄 PANTALLAS
 function mostrar(p){
-["pantallaInicio","pantallaAlumnos","pantallaPagos","pantallaRuta","pantallaGPS","pantallaPadres"]
-.forEach(id => document.getElementById(id).style.display="none")
+
+document.getElementById("pantallaInicio").style.display="none"
+document.getElementById("pantallaAlumnos").style.display="none"
+document.getElementById("pantallaRuta").style.display="none"
+document.getElementById("pantallaGPS").style.display="none"
+document.getElementById("pantallaPadres").style.display="none"
 
 document.getElementById(p).style.display="block"
 
-if(p==="pantallaPagos") mostrarPagos()
 if(p==="pantallaRuta") mostrarRuta()
 if(p==="pantallaGPS") iniciarGPS()
 if(p==="pantallaPadres") iniciarPadres()
 }
 
-// 📱
+// 📱 WHATSAPP
 function whatsapp(nombre,telefono){
-window.open("https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos llegando por "+nombre))
+let url = "https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos llegando por "+nombre)
+window.open(url)
 }
 
 // 🗑
@@ -133,12 +115,6 @@ if(confirm("Eliminar?")){
 alumnos.splice(i,1)
 guardarDatos()
 }
-}
-
-// 💰
-function marcarPago(i){
-alumnos[i].pago = !alumnos[i].pago
-guardarDatos()
 }
 
 // ✏
@@ -150,58 +126,60 @@ guardarDatos()
 }
 }
 
-// 📊
+// 📊 DASHBOARD
 function actualizarDashboard(){
-totalAlumnos.innerText = alumnos.length
-totalPagaron.innerText = alumnos.filter(a=>a.pago).length
-totalPendientes.innerText = alumnos.filter(a=>!a.pago).length
+document.getElementById("totalAlumnos").innerText = alumnos.length
 }
 
-// 🗺
+// 🗺 RUTA
 function iniciarRuta(){
 navigator.geolocation.getCurrentPosition((pos)=>{
-window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords.longitude}/${alumnos.map(a=>a.direccion).join("/")}`)
+let url = "https://www.google.com/maps/dir/"+pos.coords.latitude+","+pos.coords.longitude+"/"+alumnos.map(a=>a.direccion).join("/")
+window.open(url)
 })
 }
 
-// 📡 GPS (MEJORADO 🔥)
+// 📡 GPS CHOFER
 function iniciarGPS(){
-
-if(watchID !== null) return // evita duplicados
-
-watchID = navigator.geolocation.watchPosition((pos)=>{
+navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
-db.ref("ubicacion").set({lat:latActual,lon:lonActual})
+db.ref("ubicacion").set({
+lat: latActual,
+lon: lonActual
+})
 
-ubicacion.innerText = latActual + "," + lonActual
+document.getElementById("ubicacion").innerText =
+latActual + "," + lonActual
 
-mapa.src = `https://maps.google.com/maps?q=${latActual},${lonActual}&z=16&output=embed`
+document.getElementById("mapa").src =
+"https://maps.google.com/maps?q="+latActual+","+lonActual+"&z=16&output=embed"
 
 })
 }
 
-// 👨‍👩‍👧
+// 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 db.ref("ubicacion").on("value",(snap)=>{
 let data = snap.val()
 if(!data) return
 
-ubicacionPadres.innerText = data.lat + "," + data.lon
-mapaPadres.src = `https://maps.google.com/maps?q=${data.lat},${data.lon}&z=16&output=embed`
+document.getElementById("ubicacionPadres").innerText =
+data.lat + "," + data.lon
+
+document.getElementById("mapaPadres").src =
+"https://maps.google.com/maps?q="+data.lat+","+data.lon+"&z=16&output=embed"
 })
 }
 
 // 📍
 function abrirEnMapa(){
-window.open(`https://www.google.com/maps?q=${latActual},${lonActual}`)
+window.open("https://www.google.com/maps?q="+latActual+","+lonActual)
 }
 
-// 🔥 SERVICE WORKER PRO
+// SERVICE WORKER
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-  });
+  navigator.serviceWorker.register("sw.js")
 }
