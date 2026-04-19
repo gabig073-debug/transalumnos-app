@@ -61,11 +61,13 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2);
 .menu{
 position:absolute;
 bottom:0;
+left:0;
 width:100%;
 display:flex;
 justify-content:space-around;
 background:white;
 padding:10px;
+border-top:1px solid #ccc;
 }
 
 /* 📱 CUANDO ES CELULAR REAL */
