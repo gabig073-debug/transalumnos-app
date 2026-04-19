@@ -146,12 +146,17 @@ window.open(url)
 
 // 📡 GPS CHOFER (🔥 GUARDA EN FIREBASE)
 function iniciarGPS(){
+
+if(!navigator.geolocation){
+alert("GPS no soportado")
+return
+}
+
 navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
-// 🔥 SOLO ESTO USA FIREBASE
 db.ref("ubicacion").set({
 lat: latActual,
 lon: lonActual,
@@ -159,14 +164,22 @@ time: Date.now()
 })
 
 document.getElementById("ubicacion").innerText =
-latActual + "," + lonActual
+"Lat: " + latActual + " | Lon: " + lonActual
 
 document.getElementById("mapa").src =
 "https://maps.google.com/maps?q="+latActual+","+lonActual+"&z=16&output=embed"
 
+},
+(err)=>{
+alert("Error GPS: " + err.message)
+},
+{
+enableHighAccuracy:true,
+timeout:15000,
+maximumAge:0
 })
-}
 
+}
 // 👨‍👩‍👧 PADRES (🔥 SOLO LEE FIREBASE)
 function iniciarPadres(){
 
