@@ -196,3 +196,7 @@ window.open("https://www.google.com/maps?q="+latActual+","+lonActual)
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js")
 }
+
+setTimeout(()=>{
+iniciarGPS()
+},2000)
