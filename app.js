@@ -149,12 +149,6 @@ window.open(url)
 function iniciarGPS(){
 
 let texto = document.getElementById("ubicacion")
-let mapa = document.getElementById("mapa")
-
-if(!texto || !mapa){
-alert("Error: no se encuentra el mapa")
-return
-}
 
 navigator.geolocation.watchPosition((pos)=>{
 
@@ -164,14 +158,8 @@ let lon = pos.coords.longitude
 latActual = lat
 lonActual = lon
 
-// 🔥 ACTUALIZA TEXTO
+// 👇 MOSTRAR COORDENADAS
 texto.innerText = "Lat: " + lat + " | Lon: " + lon
-
-// 🔥 FORZAR ACTUALIZACIÓN MAPA
-mapa.src = ""
-setTimeout(()=>{
-mapa.src = "https://maps.google.com/maps?q="+lat+","+lon+"&z=16&output=embed"
-},300)
 
 // 🔥 GUARDAR EN FIREBASE
 db.ref("ubicacion").set({
@@ -191,7 +179,6 @@ maximumAge:0
 })
 
 }
-
 // 👨‍👩‍👧 PADRES (VER UBICACIÓN)
 function iniciarPadres(){
 
