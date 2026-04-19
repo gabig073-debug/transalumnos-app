@@ -147,17 +147,34 @@ window.open(url)
 // 📡 GPS CHOFER (🔥 GUARDA EN FIREBASE)
 function iniciarGPS(){
 
-alert("GPS iniciado") // 👈 esto es solo prueba
+let texto = document.getElementById("ubicacion")
+let mapa = document.getElementById("mapa")
+
+if(!texto || !mapa){
+alert("Error: elementos no encontrados")
+return
+}
 
 navigator.geolocation.watchPosition((pos)=>{
 
-alert("GPS funcionando") // 👈 prueba
+let lat = pos.coords.latitude
+let lon = pos.coords.longitude
 
-latActual = pos.coords.latitude
-lonActual = pos.coords.longitude
+latActual = lat
+lonActual = lon
 
-document.getElementById("ubicacion").innerText =
-latActual + "," + lonActual
+// 🔥 ACTUALIZA TEXTO
+texto.innerText = "Lat: " + lat + " | Lon: " + lon
+
+// 🔥 ACTUALIZA MAPA
+mapa.src = "https://maps.google.com/maps?q="+lat+","+lon+"&z=16&output=embed"
+
+// 🔥 GUARDA EN FIREBASE
+db.ref("ubicacion").set({
+lat: lat,
+lon: lon,
+time: Date.now()
+})
 
 },
 (err)=>{
