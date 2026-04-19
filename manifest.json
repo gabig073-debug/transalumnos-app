@@ -1,6 +1,6 @@
 {
-  "name": "TransAlumnos",
-  "short_name": "Trans",
+  "name": "TransporteAlumnos",
+  "short_name": "Transporte",
   "start_url": "/transalumnos-app/index.html",
   "scope": "/transalumnos-app/",
   "display": "standalone",
