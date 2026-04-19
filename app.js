@@ -147,27 +147,17 @@ window.open(url)
 // 📡 GPS CHOFER (🔥 GUARDA EN FIREBASE)
 function iniciarGPS(){
 
-if(!navigator.geolocation){
-alert("GPS no soportado")
-return
-}
+alert("GPS iniciado") // 👈 esto es solo prueba
 
 navigator.geolocation.watchPosition((pos)=>{
+
+alert("GPS funcionando") // 👈 prueba
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
-db.ref("ubicacion").set({
-lat: latActual,
-lon: lonActual,
-time: Date.now()
-})
-
 document.getElementById("ubicacion").innerText =
-"Lat: " + latActual + " | Lon: " + lonActual
-
-document.getElementById("mapa").src =
-"https://maps.google.com/maps?q="+latActual+","+lonActual+"&z=16&output=embed"
+latActual + "," + lonActual
 
 },
 (err)=>{
