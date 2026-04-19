@@ -1,4 +1,4 @@
-// 🔥 FIREBASE CONFIG (SOLO GPS)
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
   authDomain: "TU_DOMINIO",
@@ -9,12 +9,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 📦 DATOS LOCALES (SIN FIREBASE)
+// 📦 DATOS LOCALES
 let alumnos = JSON.parse(localStorage.getItem("alumnos")) || []
 
 let latActual = null
 let lonActual = null
 
+// 🚀 INICIO
 mostrarAlumnos()
 actualizarDashboard()
 
@@ -111,7 +112,7 @@ let url = "https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos
 window.open(url)
 }
 
-// 🗑
+// 🗑 ELIMINAR
 function eliminarAlumno(i){
 if(confirm("Eliminar?")){
 alumnos.splice(i,1)
@@ -121,7 +122,7 @@ actualizarDashboard()
 }
 }
 
-// ✏
+// ✏ EDITAR
 function editarAlumno(i){
 let n = prompt("Nombre", alumnos[i].nombre)
 if(n){
@@ -136,7 +137,7 @@ function actualizarDashboard(){
 document.getElementById("totalAlumnos").innerText = alumnos.length
 }
 
-// 🗺 RUTA
+// 🗺 RUTA GOOGLE
 function iniciarRuta(){
 navigator.geolocation.getCurrentPosition((pos)=>{
 let url = "https://www.google.com/maps/dir/"+pos.coords.latitude+","+pos.coords.longitude+"/"+alumnos.map(a=>a.direccion).join("/")
@@ -144,14 +145,14 @@ window.open(url)
 })
 }
 
-// 📡 GPS CHOFER (🔥 GUARDA EN FIREBASE)
+// 📡 GPS CHOFER (🔥 MEJORADO)
 function iniciarGPS(){
 
 let texto = document.getElementById("ubicacion")
 let mapa = document.getElementById("mapa")
 
 if(!texto || !mapa){
-alert("Error: elementos no encontrados")
+alert("Error: no se encuentra el mapa")
 return
 }
 
@@ -166,10 +167,13 @@ lonActual = lon
 // 🔥 ACTUALIZA TEXTO
 texto.innerText = "Lat: " + lat + " | Lon: " + lon
 
-// 🔥 ACTUALIZA MAPA
+// 🔥 FORZAR ACTUALIZACIÓN MAPA
+mapa.src = ""
+setTimeout(()=>{
 mapa.src = "https://maps.google.com/maps?q="+lat+","+lon+"&z=16&output=embed"
+},300)
 
-// 🔥 GUARDA EN FIREBASE
+// 🔥 GUARDAR EN FIREBASE
 db.ref("ubicacion").set({
 lat: lat,
 lon: lon,
@@ -187,7 +191,8 @@ maximumAge:0
 })
 
 }
-// 👨‍👩‍👧 PADRES (🔥 SOLO LEE FIREBASE)
+
+// 👨‍👩‍👧 PADRES (VER UBICACIÓN)
 function iniciarPadres(){
 
 db.ref("ubicacion").on("value",(snap)=>{
@@ -195,25 +200,31 @@ db.ref("ubicacion").on("value",(snap)=>{
 let data = snap.val()
 if(!data) return
 
+let lat = data.lat
+let lon = data.lon
+
 document.getElementById("ubicacionPadres").innerText =
-data.lat + "," + data.lon
+"Lat: " + lat + " | Lon: " + lon
 
 document.getElementById("mapaPadres").src =
-"https://maps.google.com/maps?q="+data.lat+","+data.lon+"&z=16&output=embed"
+"https://maps.google.com/maps?q="+lat+","+lon+"&z=16&output=embed"
 
 })
 }
 
-// 📍
+// 📍 ABRIR EN GOOGLE MAPS
 function abrirEnMapa(){
-window.open("https://www.google.com/maps?q="+latActual+","+lonActual)
+
+if(latActual === null){
+alert("Esperando ubicación...")
+return
 }
 
-// SERVICE WORKER
+window.open("https://www.google.com/maps?q="+latActual+","+lonActual)
+
+}
+
+// 🔧 SERVICE WORKER
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js")
 }
-
-setTimeout(()=>{
-iniciarGPS()
-},2000)
