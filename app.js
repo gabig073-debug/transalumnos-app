@@ -1,4 +1,4 @@
-// 🔥 FIREBASE CONFIG
+// 🔥 FIREBASE CONFIG (SOLO GPS)
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
   authDomain: "TU_DOMINIO",
@@ -9,16 +9,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let alumnos = []
+// 📦 DATOS LOCALES (SIN FIREBASE)
+let alumnos = JSON.parse(localStorage.getItem("alumnos")) || []
+
 let latActual = null
 let lonActual = null
 
-// 🔥 CARGAR ALUMNOS
-db.ref("alumnos").on("value", (snapshot) => {
-  alumnos = snapshot.val() || []
-  mostrarAlumnos()
-  actualizarDashboard()
-})
+mostrarAlumnos()
+actualizarDashboard()
 
 // 👦 AGREGAR
 function agregarAlumno(){
@@ -34,20 +32,24 @@ return
 alumnos.push({ nombre, direccion, telefono })
 
 guardarDatos()
+mostrarAlumnos()
+actualizarDashboard()
 
 document.getElementById("nombre").value=""
 document.getElementById("direccion").value=""
 document.getElementById("telefono").value=""
 }
 
-// 💾 GUARDAR
+// 💾 GUARDAR LOCAL
 function guardarDatos(){
-db.ref("alumnos").set(alumnos)
+localStorage.setItem("alumnos", JSON.stringify(alumnos))
 }
 
 // 📋 MOSTRAR
 function mostrarAlumnos(){
 let lista = document.getElementById("lista")
+if(!lista) return
+
 lista.innerHTML=""
 
 alumnos.forEach((a,i)=>{
@@ -114,6 +116,8 @@ function eliminarAlumno(i){
 if(confirm("Eliminar?")){
 alumnos.splice(i,1)
 guardarDatos()
+mostrarAlumnos()
+actualizarDashboard()
 }
 }
 
@@ -123,6 +127,7 @@ let n = prompt("Nombre", alumnos[i].nombre)
 if(n){
 alumnos[i].nombre = n
 guardarDatos()
+mostrarAlumnos()
 }
 }
 
@@ -139,16 +144,18 @@ window.open(url)
 })
 }
 
-// 📡 GPS CHOFER
+// 📡 GPS CHOFER (🔥 GUARDA EN FIREBASE)
 function iniciarGPS(){
 navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
+// 🔥 SOLO ESTO USA FIREBASE
 db.ref("ubicacion").set({
 lat: latActual,
-lon: lonActual
+lon: lonActual,
+time: Date.now()
 })
 
 document.getElementById("ubicacion").innerText =
@@ -160,9 +167,11 @@ document.getElementById("mapa").src =
 })
 }
 
-// 👨‍👩‍👧 PADRES
+// 👨‍👩‍👧 PADRES (🔥 SOLO LEE FIREBASE)
 function iniciarPadres(){
+
 db.ref("ubicacion").on("value",(snap)=>{
+
 let data = snap.val()
 if(!data) return
 
@@ -171,6 +180,7 @@ data.lat + "," + data.lon
 
 document.getElementById("mapaPadres").src =
 "https://maps.google.com/maps?q="+data.lat+","+data.lon+"&z=16&output=embed"
+
 })
 }
 
