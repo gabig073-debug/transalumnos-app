@@ -1,88 +1,85 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
+<title>Ubicación en vivo</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>TransAlumnos</title>
+<!-- 🗺 LEAFLET -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2196F3">
+<style>
+body{
+margin:0;
+font-family: Arial;
+}
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<link rel="apple-touch-icon" href="icono.png">
-<link rel="stylesheet" href="style.css">
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+#map{
+height:100vh;
+width:100%;
+}
+</style>
 
 </head>
 
 <body>
 
-<div class="app">
+<h3 style="text-align:center;">🚐 Transporte en tiempo real</h3>
+<div id="map"></div>
 
-<h1>🚐 TransporteAlumnos</h1>
+<!-- 🔥 FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<!-- 🏠 INICIO -->
-<div id="pantallaInicio" class="container">
-<h2>📊 Dashboard</h2>
-<p>Total alumnos: <span id="totalAlumnos">0</span></p>
-</div>
+<script>
 
-<!-- 👦 ALUMNOS -->
-<div id="pantallaAlumnos" style="display:none" class="container">
-<h2>Agregar Alumno</h2>
+// 🔥 FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyBCd1wAUZo2HVUT-1-YuXgMukHlQP8I0Xo",
+  authDomain: "transalumnos-7841c.firebaseapp.com",
+  databaseURL: "https://transalumnos-7841c-default-rtdb.firebaseio.com",
+  projectId: "transalumnos-7841c",
+};
 
-<input id="nombre" placeholder="Nombre">
-<input id="direccion" placeholder="Dirección">
-<input id="telefono" placeholder="Teléfono">
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-<button onclick="agregarAlumno()">Guardar</button>
+// 🗺 CREAR MAPA
+let map = L.map('map').setView([-23.13, -64.32], 15)
 
-<h2>Lista</h2>
-<ul id="lista"></ul>
-</div>
+// 🗺 CAPA (mapa base)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: 'Map data © OpenStreetMap'
+}).addTo(map)
 
-<!-- 🚐 RUTA -->
-<div id="pantallaRuta" style="display:none" class="container">
-<h2>Ruta</h2>
-<button onclick="iniciarRuta()">🗺 Iniciar recorrido</button>
-<ul id="listaRuta"></ul>
-</div>
+// 🚐 MARCADOR
+let marcador = null
 
-<!-- 📡 GPS -->
-<div id="pantallaGPS" style="display:none" class="container">
-<h2>GPS en vivo</h2>
-<p id="ubicacion">Esperando ubicación...</p>
-<p id="ubicacion">Esperando ubicación...</p>
-<button onclick="abrirEnMapa()">📍 Ver en mapa</button>
-<button onclick="abrirEnMapa()">Abrir en mapa</button>
-</div>
+// 🔄 ESCUCHAR UBICACIÓN
+db.ref("ubicacion").on("value", (data)=>{
 
-<!-- 👨‍👩‍👧 PADRES -->
-<div id="pantallaPadres" style="display:none" class="container">
-<h2>Seguimiento en vivo</h2>
-<p id="ubicacionPadres">Cargando ubicación...</p>
-<iframe id="mapaPadres" width="100%" height="300"></iframe>
-</div>
+let u = data.val()
 
-<!-- 🔻 MENÚ -->
-<div class="menu">
-<button onclick="mostrar('pantallaInicio')">🏠</button>
-<button onclick="mostrar('pantallaAlumnos')">👦</button>
-<button onclick="mostrar('pantallaRuta')">🚐</button>
-<button onclick="mostrar('pantallaGPS')">📡</button>
-<button onclick="mostrar('pantallaPadres')">👨‍👩‍👧</button>
-</div>
+if(!u) return
 
-</div>
+let lat = u.lat
+let lon = u.lon
 
-<script src="app.js"></script>
+// SI NO EXISTE → CREAR
+if(!marcador){
+marcador = L.marker([lat, lon]).addTo(map)
+} else {
+// SI EXISTE → MOVER
+marcador.setLatLng([lat, lon])
+}
+
+// CENTRAR MAPA
+map.setView([lat, lon], 16)
+
+})
+
+</script>
 
 </body>
 </html>
