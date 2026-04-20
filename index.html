@@ -17,6 +17,10 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
+<!-- 🗺 LEAFLET -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 </head>
 
 <body>
@@ -25,6 +29,7 @@
 
 <h1>🚐 TransAlumnos</h1>
 
+<!-- 🏠 INICIO -->
 <div id="pantallaInicio" class="container">
 <h2>📊 Dashboard</h2>
 <p>Total alumnos: <span id="totalAlumnos">0</span></p>
@@ -32,6 +37,7 @@
 <p>Pendientes: <span id="totalPendientes">0</span></p>
 </div>
 
+<!-- 👦 ALUMNOS -->
 <div id="pantallaAlumnos" style="display:none" class="container">
 <h2>Agregar Alumno</h2>
 
@@ -45,35 +51,38 @@
 <ul id="lista"></ul>
 </div>
 
-<div id="pantallaPagos" style="display:none" class="container">
-<h2>Pagos</h2>
-<ul id="listaPagos"></ul>
-</div>
-
+<!-- 🚐 RUTA -->
 <div id="pantallaRuta" style="display:none" class="container">
 <h2>Ruta</h2>
 <button onclick="iniciarRuta()">🗺 Iniciar recorrido</button>
 <ul id="listaRuta"></ul>
 </div>
 
+<!-- 📡 GPS CHOFER -->
 <div id="pantallaGPS" style="display:none" class="container">
 <h2>GPS en vivo</h2>
 <p id="ubicacion">Esperando ubicación...</p>
-<iframe id="mapa" width="100%" height="300"></iframe>
+
+<!-- 🗺 MAPA REAL -->
+<div id="mapa" style="height:300px; border-radius:10px;"></div>
+
 <button onclick="abrirEnMapa()">Abrir en mapa</button>
 </div>
 
+<!-- 👨‍👩‍👧 PADRES -->
 <div id="pantallaPadres" style="display:none" class="container">
 <h2>Seguimiento en vivo</h2>
 <p id="ubicacionPadres">Cargando ubicación...</p>
-<iframe id="mapaPadres" width="100%" height="300"></iframe>
+
+<!-- 🗺 MAPA REAL -->
+<div id="mapaPadres" style="height:300px; border-radius:10px;"></div>
 </div>
 
+<!-- 🔻 MENÚ -->
 <div class="menu">
 <button onclick="mostrar('pantallaInicio')">🏠</button>
 <button onclick="mostrar('pantallaAlumnos')">👦</button>
 <button onclick="mostrar('pantallaRuta')">🚐</button>
-<button onclick="mostrar('pantallaPagos')">💰</button>
 <button onclick="mostrar('pantallaGPS')">📡</button>
 <button onclick="mostrar('pantallaPadres')">👨‍👩‍👧</button>
 </div>
