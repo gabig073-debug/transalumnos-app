@@ -148,6 +148,71 @@ if(watchID !== null) return
 
 // 🗺 CREAR MAPA
 if(!mapChofer){
+mapChofer = L.map('mapa').setView([0,0], 16)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '© OpenStreetMap'
+}).addTo(mapChofer)
+}
+
+let circle = null
+
+watchID = navigator.geolocation.watchPosition((pos)=>{
+
+let lat = pos.coords.latitude
+let lon = pos.coords.longitude
+let accuracy = pos.coords.accuracy
+
+latActual = lat
+lonActual = lon
+
+// 🔥 GUARDAR
+db.ref("ubicacion").set({
+lat: lat,
+lon: lon,
+accuracy: accuracy,
+time: Date.now()
+})
+
+// TEXTO
+ubicacion.innerText =
+"Lat: " + lat + "\nLon: " + lon + "\nPrecisión: " + Math.round(accuracy) + "m"
+
+// 📍 MARCADOR
+if(!markerChofer){
+markerChofer = L.marker([lat, lon]).addTo(mapChofer)
+}else{
+markerChofer.setLatLng([lat, lon])
+}
+
+// 🔵 CÍRCULO DE PRECISIÓN
+if(!circle){
+circle = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
+}else{
+circle.setLatLng([lat, lon])
+circle.setRadius(accuracy)
+}
+
+// 🎯 CENTRAR SOLO LA PRIMERA VEZ
+if(!mapChofer._centrado){
+mapChofer.setView([lat, lon], 17)
+mapChofer._centrado = true
+}
+
+},
+(err)=>{
+alert("Error GPS: " + err.message)
+},
+{
+enableHighAccuracy:true,
+timeout:20000,
+maximumAge:0
+})
+
+}
+
+// 🗺 CREAR MAPA
+if(!mapChofer){
 mapChofer = L.map('mapa').setView([-23.13, -64.32], 15)
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
