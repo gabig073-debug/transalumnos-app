@@ -15,7 +15,14 @@ const db = firebase.database();
 let alumnos = []
 let latActual = null
 let lonActual = null
-let watchID = null // 🔥 evita duplicar GPS
+let watchID = null
+
+// 🗺 MAPAS
+let mapChofer = null
+let markerChofer = null
+
+let mapPadres = null
+let markerPadres = null
 
 // 🔥 CARGAR DATOS
 db.ref("alumnos").on("value", (snapshot) => {
@@ -35,7 +42,7 @@ alert("Completá todo")
 return
 }
 
-alumnos.push({nombre,direccion,telefono,pago:false})
+alumnos.push({nombre,direccion,telefono})
 guardarDatos()
 
 nombreInput.value=""
@@ -59,35 +66,14 @@ li.innerHTML = `
 <div class="card">
 <h3>${a.nombre}</h3>
 <p>${a.direccion}</p>
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
 
 <button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱</button>
-<button onclick="marcarPago(${i})">💰</button>
 <button onclick="editarAlumno(${i})">✏</button>
 <button onclick="eliminarAlumno(${i})">🗑</button>
 </div>
 `
 
 lista.appendChild(li)
-})
-}
-
-// 💰
-function mostrarPagos(){
-listaPagos.innerHTML=""
-
-alumnos.forEach((a,i)=>{
-let li = document.createElement("li")
-
-li.innerHTML = `
-<div class="card">
-<h3>${a.nombre}</h3>
-<p>${a.pago ? "🟢 Pagado" : "🔴 Pendiente"}</p>
-<button onclick="marcarPago(${i})">Cambiar</button>
-</div>
-`
-
-listaPagos.appendChild(li)
 })
 }
 
@@ -111,12 +97,11 @@ listaRuta.appendChild(li)
 
 // 🔄
 function mostrar(p){
-["pantallaInicio","pantallaAlumnos","pantallaPagos","pantallaRuta","pantallaGPS","pantallaPadres"]
+["pantallaInicio","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
 .forEach(id => document.getElementById(id).style.display="none")
 
 document.getElementById(p).style.display="block"
 
-if(p==="pantallaPagos") mostrarPagos()
 if(p==="pantallaRuta") mostrarRuta()
 if(p==="pantallaGPS") iniciarGPS()
 if(p==="pantallaPadres") iniciarPadres()
@@ -135,12 +120,6 @@ guardarDatos()
 }
 }
 
-// 💰
-function marcarPago(i){
-alumnos[i].pago = !alumnos[i].pago
-guardarDatos()
-}
-
 // ✏
 function editarAlumno(i){
 let n = prompt("Nombre", alumnos[i].nombre)
@@ -153,8 +132,6 @@ guardarDatos()
 // 📊
 function actualizarDashboard(){
 totalAlumnos.innerText = alumnos.length
-totalPagaron.innerText = alumnos.filter(a=>a.pago).length
-totalPendientes.innerText = alumnos.filter(a=>!a.pago).length
 }
 
 // 🗺
@@ -164,34 +141,82 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS (MEJORADO 🔥)
+// 📡 GPS CHOFER (MAPA REAL)
 function iniciarGPS(){
 
-if(watchID !== null) return // evita duplicados
+if(watchID !== null) return
+
+// 🗺 CREAR MAPA
+if(!mapChofer){
+mapChofer = L.map('mapa').setView([-23.13, -64.32], 15)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '© OpenStreetMap'
+}).addTo(mapChofer)
+}
 
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
 latActual = pos.coords.latitude
 lonActual = pos.coords.longitude
 
+// 🔥 GUARDAR EN FIREBASE
 db.ref("ubicacion").set({lat:latActual,lon:lonActual})
 
+// TEXTO
 ubicacion.innerText = latActual + "," + lonActual
 
-mapa.src = `https://maps.google.com/maps?q=${latActual},${lonActual}&z=16&output=embed`
-
-})
+// MARCADOR
+if(!markerChofer){
+markerChofer = L.marker([latActual, lonActual]).addTo(mapChofer)
+}else{
+markerChofer.setLatLng([latActual, lonActual])
 }
 
-// 👨‍👩‍👧
+// CENTRAR
+mapChofer.setView([latActual, lonActual], 16)
+
+},{
+enableHighAccuracy:true
+})
+
+}
+
+// 👨‍👩‍👧 PADRES (MAPA EN VIVO)
 function iniciarPadres(){
+
+// CREAR MAPA
+if(!mapPadres){
+mapPadres = L.map('mapaPadres').setView([-23.13, -64.32], 15)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '© OpenStreetMap'
+}).addTo(mapPadres)
+}
+
+// ESCUCHAR FIREBASE
 db.ref("ubicacion").on("value",(snap)=>{
+
 let data = snap.val()
 if(!data) return
 
-ubicacionPadres.innerText = data.lat + "," + data.lon
-mapaPadres.src = `https://maps.google.com/maps?q=${data.lat},${data.lon}&z=16&output=embed`
+let lat = data.lat
+let lon = data.lon
+
+ubicacionPadres.innerText = lat + "," + lon
+
+// MARCADOR
+if(!markerPadres){
+markerPadres = L.marker([lat, lon]).addTo(mapPadres)
+}else{
+markerPadres.setLatLng([lat, lon])
+}
+
+// CENTRAR
+mapPadres.setView([lat, lon], 16)
+
 })
+
 }
 
 // 📍
@@ -199,7 +224,7 @@ function abrirEnMapa(){
 window.open(`https://www.google.com/maps?q=${latActual},${lonActual}`)
 }
 
-// 🔥 SERVICE WORKER PRO
+// 🔥 SERVICE WORKER
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js")
