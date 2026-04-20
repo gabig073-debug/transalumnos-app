@@ -210,43 +210,6 @@ maximumAge:0
 })
 
 }
-
-// 🗺 CREAR MAPA
-if(!mapChofer){
-mapChofer = L.map('mapa').setView([-23.13, -64.32], 15)
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '© OpenStreetMap'
-}).addTo(mapChofer)
-}
-
-watchID = navigator.geolocation.watchPosition((pos)=>{
-
-latActual = pos.coords.latitude
-lonActual = pos.coords.longitude
-
-// 🔥 GUARDAR EN FIREBASE
-db.ref("ubicacion").set({lat:latActual,lon:lonActual})
-
-// TEXTO
-ubicacion.innerText = latActual + "," + lonActual
-
-// MARCADOR
-if(!markerChofer){
-markerChofer = L.marker([latActual, lonActual]).addTo(mapChofer)
-}else{
-markerChofer.setLatLng([latActual, lonActual])
-}
-
-// CENTRAR
-mapChofer.setView([latActual, lonActual], 16)
-
-},{
-enableHighAccuracy:true
-})
-
-}
-
 // 👨‍👩‍👧 PADRES (MAPA EN VIVO)
 function iniciarPadres(){
 
