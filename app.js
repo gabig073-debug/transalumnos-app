@@ -237,59 +237,70 @@ maximumAge:0
 // 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
-if(listenerPadresActivo) return
-listenerPadresActivo = true
+  // 🚫 evitar duplicar listener
+  if(listenerPadresActivo) return
+  listenerPadresActivo = true
 
-if(!mapPadres){
-mapPadres = L.map('mapaPadres').setView([0,0], 16)
+  // 🗺 CREAR MAPA
+  if(!mapPadres){
+    mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '© OpenStreetMap'
-}).addTo(mapPadres)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(mapPadres)
+  }
+
+  // 🔥 IMPORTANTE: arregla mapa si estaba oculto
+  setTimeout(()=>{
+    mapPadres.invalidateSize()
+  }, 300)
+
+  // 🔄 ESCUCHAR FIREBASE
+  db.ref("ubicacion").on("value",(snap)=>{
+
+    let data = snap.val()
+    if(!data) return
+
+    let lat = data.lat
+    let lon = data.lon
+    let accuracy = data.accuracy || 20
+
+    // 📄 TEXTO
+    ubicacionPadres.innerText =
+      "Lat: " + lat +
+      "\nLon: " + lon +
+      "\nPrecisión: " + Math.round(accuracy) + "m"
+
+    // 📍 MARCADOR
+    if(!markerPadres){
+      markerPadres = L.marker([lat, lon]).addTo(mapPadres)
+    }else{
+      markerPadres.setLatLng([lat, lon])
+    }
+
+    // 🔵 CÍRCULO DE PRECISIÓN
+    if(!circlePadres){
+      circlePadres = L.circle([lat, lon], {
+        radius: accuracy,
+        color: "blue",
+        fillOpacity: 0.2
+      }).addTo(mapPadres)
+    }else{
+      circlePadres.setLatLng([lat, lon])
+      circlePadres.setRadius(accuracy)
+    }
+
+    // 🎯 CENTRADO INTELIGENTE
+    if(!mapPadres._centrado){
+      mapPadres.setView([lat, lon], 17)
+      mapPadres._centrado = true
+    }else{
+      mapPadres.panTo([lat, lon])
+    }
+
+  })
+
 }
-
-db.ref("ubicacion").on("value",(snap)=>{
-
-let data = snap.val()
-if(!data) return
-
-let lat = data.lat
-let lon = data.lon
-let accuracy = data.accuracy || 20
-
-ubicacionPadres.innerText =
-"Lat: " + lat +
-"\nLon: " + lon +
-"\nPrecisión: " + Math.round(accuracy) + "m"
-
-if(!markerPadres){
-markerPadres = L.marker([lat, lon]).addTo(mapPadres)
-}else{
-markerPadres.setLatLng([lat, lon])
-}
-
-if(!circlePadres){
-circlePadres = L.circle([lat, lon], {
-radius: accuracy,
-color: "blue",
-fillOpacity: 0.2
-}).addTo(mapPadres)
-}else{
-circlePadres.setLatLng([lat, lon])
-circlePadres.setRadius(accuracy)
-}
-
-if(!mapPadres._centrado){
-mapPadres.setView([lat, lon], 17)
-mapPadres._centrado = true
-}else{
-mapPadres.panTo([lat, lon])
-}
-
-})
-
-}
-
 // 📍
 function abrirEnMapa(){
 window.open(`https://www.google.com/maps?q=${latActual},${lonActual}`)
