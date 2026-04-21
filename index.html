@@ -29,8 +29,17 @@
 
 <h1>🚐 TransAlumnos</h1>
 
+<!-- 🔥 MODO (NUEVO) -->
+<div id="pantallaModo" class="container">
+<h2>Elegir modo</h2>
+
+<button onclick="modoChofer()">🚐 Soy Chofer</button>
+<button onclick="modoPadres()">👨‍👩‍👧 Soy Padre</button>
+
+</div>
+
 <!-- 🏠 INICIO -->
-<div id="pantallaInicio" class="container">
+<div id="pantallaInicio" class="container" style="display:none">
 <h2>📊 Dashboard</h2>
 <p>Total alumnos: <span id="totalAlumnos">0</span></p>
 <p>Pagaron: <span id="totalPagaron">0</span></p>
@@ -63,7 +72,6 @@
 <h2>GPS en vivo</h2>
 <p id="ubicacion">Esperando ubicación...</p>
 
-<!-- 🗺 MAPA REAL -->
 <div id="mapa" style="height:300px; border-radius:10px;"></div>
 
 <button onclick="abrirEnMapa()">Abrir en mapa</button>
@@ -74,7 +82,6 @@
 <h2>Seguimiento en vivo</h2>
 <p id="ubicacionPadres">Cargando ubicación...</p>
 
-<!-- 🗺 MAPA REAL -->
 <div id="mapaPadres" style="height:300px; border-radius:10px;"></div>
 </div>
 
