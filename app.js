@@ -98,9 +98,10 @@ listaRuta.appendChild(li)
 })
 }
 
-// 🔄
+// 🔄 CAMBIO DE PANTALLAS (ARREGLADO 🔥)
 function mostrar(p){
-["pantallaInicio","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
+
+["pantallaModo","pantallaInicio","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
 .forEach(id => document.getElementById(id).style.display="none")
 
 document.getElementById(p).style.display="block"
@@ -110,7 +111,17 @@ if(p==="pantallaGPS") iniciarGPS()
 if(p==="pantallaPadres") iniciarPadres()
 }
 
-// 📱
+// 🚐 MODO CHOFER
+function modoChofer(){
+  mostrar("pantallaGPS")
+}
+
+// 👨‍👩‍👧 MODO PADRES
+function modoPadres(){
+  mostrar("pantallaPadres")
+}
+
+// 📱 WHATSAPP
 function whatsapp(nombre,telefono){
 window.open("https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos llegando por "+nombre))
 }
@@ -144,10 +155,10 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER (ARREGLADO 🔥)
+// 📡 GPS CHOFER (FIX 🔥)
 function iniciarGPS(){
 
-// 🔥 SOLUCIÓN: reiniciar siempre el GPS
+// 🔥 REINICIAR GPS
 if(watchID !== null){
   navigator.geolocation.clearWatch(watchID)
 }
@@ -172,7 +183,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   console.log("GPS:", lat, lon)
 
-  // 🔥 ACTUALIZA SIEMPRE FIREBASE
+  // 🔥 GUARDAR EN FIREBASE
   db.ref("ubicacion").set({
     lat: lat,
     lon: lon,
@@ -214,7 +225,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
 }
 
-// 👨‍👩‍👧 PADRES
+// 👨‍👩‍👧 PADRES (FIX 🔥)
 function iniciarPadres(){
 
 if(listenerPadresActivo) return
@@ -228,11 +239,12 @@ if(!mapPadres){
   }).addTo(mapPadres)
 }
 
-// 🔥 arregla mapa oculto
+// 🔥 arreglar tamaño mapa
 setTimeout(()=>{
   mapPadres.invalidateSize()
 },300)
 
+// 🔄 ESCUCHAR UBICACIÓN
 db.ref("ubicacion").on("value",(snap)=>{
 
 let data = snap.val()
