@@ -20,9 +20,12 @@ let watchID = null
 // 🗺 MAPAS
 let mapChofer = null
 let markerChofer = null
+let circleChofer = null
 
 let mapPadres = null
 let markerPadres = null
+let circlePadres = null
+let listenerPadresActivo = false
 
 // 🔥 CARGAR DATOS
 db.ref("alumnos").on("value", (snapshot) => {
@@ -141,7 +144,7 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER (MAPA REAL)
+// 📡 GPS CHOFER (PRO)
 function iniciarGPS(){
 
 if(watchID !== null) return
@@ -154,8 +157,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 attribution: '© OpenStreetMap'
 }).addTo(mapChofer)
 }
-
-let circle = null
 
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
@@ -176,7 +177,9 @@ time: Date.now()
 
 // TEXTO
 ubicacion.innerText =
-"Lat: " + lat + "\nLon: " + lon + "\nPrecisión: " + Math.round(accuracy) + "m"
+"Lat: " + lat +
+"\nLon: " + lon +
+"\nPrecisión: " + Math.round(accuracy) + "m"
 
 // 📍 MARCADOR
 if(!markerChofer){
@@ -185,15 +188,17 @@ markerChofer = L.marker([lat, lon]).addTo(mapChofer)
 markerChofer.setLatLng([lat, lon])
 }
 
-// 🔵 CÍRCULO DE PRECISIÓN
-if(!circle){
-circle = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
+// 🔵 CÍRCULO
+if(!circleChofer){
+circleChofer = L.circle([lat, lon], {
+radius: accuracy
+}).addTo(mapChofer)
 }else{
-circle.setLatLng([lat, lon])
-circle.setRadius(accuracy)
+circleChofer.setLatLng([lat, lon])
+circleChofer.setRadius(accuracy)
 }
 
-// 🎯 CENTRAR SOLO LA PRIMERA VEZ
+// 🎯 CENTRAR SOLO UNA VEZ
 if(!mapChofer._centrado){
 mapChofer.setView([lat, lon], 17)
 mapChofer._centrado = true
@@ -210,19 +215,23 @@ maximumAge:0
 })
 
 }
-// 👨‍👩‍👧 PADRES (MAPA EN VIVO)
+
+// 👨‍👩‍👧 PADRES (PRO)
 function iniciarPadres(){
 
-// CREAR MAPA
+if(listenerPadresActivo) return
+listenerPadresActivo = true
+
+// 🗺 MAPA
 if(!mapPadres){
-mapPadres = L.map('mapaPadres').setView([-23.13, -64.32], 15)
+mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 attribution: '© OpenStreetMap'
 }).addTo(mapPadres)
 }
 
-// ESCUCHAR FIREBASE
+// 🔄 ESCUCHAR FIREBASE
 db.ref("ubicacion").on("value",(snap)=>{
 
 let data = snap.val()
@@ -230,18 +239,40 @@ if(!data) return
 
 let lat = data.lat
 let lon = data.lon
+let accuracy = data.accuracy || 20
 
-ubicacionPadres.innerText = lat + "," + lon
+// TEXTO
+ubicacionPadres.innerText =
+"Lat: " + lat +
+"\nLon: " + lon +
+"\nPrecisión: " + Math.round(accuracy) + "m"
 
-// MARCADOR
+// 📍 MARCADOR
 if(!markerPadres){
 markerPadres = L.marker([lat, lon]).addTo(mapPadres)
 }else{
 markerPadres.setLatLng([lat, lon])
 }
 
-// CENTRAR
-mapPadres.setView([lat, lon], 16)
+// 🔵 CÍRCULO
+if(!circlePadres){
+circlePadres = L.circle([lat, lon], {
+radius: accuracy,
+color: "blue",
+fillOpacity: 0.2
+}).addTo(mapPadres)
+}else{
+circlePadres.setLatLng([lat, lon])
+circlePadres.setRadius(accuracy)
+}
+
+// 🎯 CENTRADO INTELIGENTE
+if(!mapPadres._centrado){
+mapPadres.setView([lat, lon], 17)
+mapPadres._centrado = true
+}else{
+mapPadres.panTo([lat, lon])
+}
 
 })
 
