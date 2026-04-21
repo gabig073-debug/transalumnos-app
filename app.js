@@ -27,32 +27,6 @@ let markerPadres = null
 let circlePadres = null
 let listenerPadresActivo = false
 
-// 🔥 MODO APP
-function modoChofer(){
-  localStorage.setItem("modo","chofer")
-  document.getElementById("pantallaModo").style.display="none"
-  document.querySelector(".menu").style.display="flex"
-  mostrar("pantallaGPS")
-}
-
-function modoPadres(){
-  localStorage.setItem("modo","padre")
-  document.getElementById("pantallaModo").style.display="none"
-  document.querySelector(".menu").style.display="none" // 🔥 oculta menú
-  mostrar("pantallaPadres")
-}
-
-// 🔥 AUTO INICIO
-window.addEventListener("load", ()=>{
-  let modo = localStorage.getItem("modo")
-
-  if(modo === "chofer"){
-    modoChofer()
-  }else if(modo === "padre"){
-    modoPadres()
-  }
-})
-
 // 🔥 CARGAR DATOS
 db.ref("alumnos").on("value", (snapshot) => {
   alumnos = snapshot.val() || []
@@ -170,66 +144,72 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER
+// 📡 GPS CHOFER (ARREGLADO 🔥)
 function iniciarGPS(){
 
-if(watchID !== null) return
+// 🔥 SOLUCIÓN: reiniciar siempre el GPS
+if(watchID !== null){
+  navigator.geolocation.clearWatch(watchID)
+}
 
+// 🗺 MAPA
 if(!mapChofer){
-mapChofer = L.map('mapa').setView([0,0], 16)
+  mapChofer = L.map('mapa').setView([0,0], 16)
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '© OpenStreetMap'
-}).addTo(mapChofer)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(mapChofer)
 }
 
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
-let lat = pos.coords.latitude
-let lon = pos.coords.longitude
-let accuracy = pos.coords.accuracy
+  let lat = pos.coords.latitude
+  let lon = pos.coords.longitude
+  let accuracy = pos.coords.accuracy
 
-latActual = lat
-lonActual = lon
+  latActual = lat
+  lonActual = lon
 
-db.ref("ubicacion").set({
-lat: lat,
-lon: lon,
-accuracy: accuracy,
-time: Date.now()
-})
+  console.log("GPS:", lat, lon)
 
-ubicacion.innerText =
-"Lat: " + lat +
-"\nLon: " + lon +
-"\nPrecisión: " + Math.round(accuracy) + "m"
+  // 🔥 ACTUALIZA SIEMPRE FIREBASE
+  db.ref("ubicacion").set({
+    lat: lat,
+    lon: lon,
+    accuracy: accuracy,
+    time: Date.now()
+  })
 
-if(!markerChofer){
-markerChofer = L.marker([lat, lon]).addTo(mapChofer)
-}else{
-markerChofer.setLatLng([lat, lon])
-}
+  ubicacion.innerText =
+    "Lat: " + lat +
+    "\nLon: " + lon +
+    "\nPrecisión: " + Math.round(accuracy) + "m"
 
-if(!circleChofer){
-circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
-}else{
-circleChofer.setLatLng([lat, lon])
-circleChofer.setRadius(accuracy)
-}
+  if(!markerChofer){
+    markerChofer = L.marker([lat, lon]).addTo(mapChofer)
+  }else{
+    markerChofer.setLatLng([lat, lon])
+  }
 
-if(!mapChofer._centrado){
-mapChofer.setView([lat, lon], 17)
-mapChofer._centrado = true
-}
+  if(!circleChofer){
+    circleChofer = L.circle([lat, lon], {
+      radius: accuracy
+    }).addTo(mapChofer)
+  }else{
+    circleChofer.setLatLng([lat, lon])
+    circleChofer.setRadius(accuracy)
+  }
+
+  mapChofer.setView([lat, lon], 17)
 
 },
 (err)=>{
-alert("Error GPS: " + err.message)
+  alert("Error GPS: " + err.message)
 },
 {
-enableHighAccuracy:true,
-timeout:20000,
-maximumAge:0
+  enableHighAccuracy:true,
+  timeout:10000,
+  maximumAge:0
 })
 
 }
@@ -237,70 +217,59 @@ maximumAge:0
 // 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
-  // 🚫 evitar duplicar listener
-  if(listenerPadresActivo) return
-  listenerPadresActivo = true
+if(listenerPadresActivo) return
+listenerPadresActivo = true
 
-  // 🗺 CREAR MAPA
-  if(!mapPadres){
-    mapPadres = L.map('mapaPadres').setView([0,0], 16)
+if(!mapPadres){
+  mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(mapPadres)
-  }
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(mapPadres)
+}
 
-  // 🔥 IMPORTANTE: arregla mapa si estaba oculto
-  setTimeout(()=>{
-    mapPadres.invalidateSize()
-  }, 300)
+// 🔥 arregla mapa oculto
+setTimeout(()=>{
+  mapPadres.invalidateSize()
+},300)
 
-  // 🔄 ESCUCHAR FIREBASE
-  db.ref("ubicacion").on("value",(snap)=>{
+db.ref("ubicacion").on("value",(snap)=>{
 
-    let data = snap.val()
-    if(!data) return
+let data = snap.val()
+if(!data) return
 
-    let lat = data.lat
-    let lon = data.lon
-    let accuracy = data.accuracy || 20
+let lat = data.lat
+let lon = data.lon
+let accuracy = data.accuracy || 20
 
-    // 📄 TEXTO
-    ubicacionPadres.innerText =
-      "Lat: " + lat +
-      "\nLon: " + lon +
-      "\nPrecisión: " + Math.round(accuracy) + "m"
+ubicacionPadres.innerText =
+  "Lat: " + lat +
+  "\nLon: " + lon +
+  "\nPrecisión: " + Math.round(accuracy) + "m"
 
-    // 📍 MARCADOR
-    if(!markerPadres){
-      markerPadres = L.marker([lat, lon]).addTo(mapPadres)
-    }else{
-      markerPadres.setLatLng([lat, lon])
-    }
+if(!markerPadres){
+  markerPadres = L.marker([lat, lon]).addTo(mapPadres)
+}else{
+  markerPadres.setLatLng([lat, lon])
+}
 
-    // 🔵 CÍRCULO DE PRECISIÓN
-    if(!circlePadres){
-      circlePadres = L.circle([lat, lon], {
-        radius: accuracy,
-        color: "blue",
-        fillOpacity: 0.2
-      }).addTo(mapPadres)
-    }else{
-      circlePadres.setLatLng([lat, lon])
-      circlePadres.setRadius(accuracy)
-    }
+if(!circlePadres){
+  circlePadres = L.circle([lat, lon], {
+    radius: accuracy,
+    color: "blue",
+    fillOpacity: 0.2
+  }).addTo(mapPadres)
+}else{
+  circlePadres.setLatLng([lat, lon])
+  circlePadres.setRadius(accuracy)
+}
 
-    // 🎯 CENTRADO INTELIGENTE
-    if(!mapPadres._centrado){
-      mapPadres.setView([lat, lon], 17)
-      mapPadres._centrado = true
-    }else{
-      mapPadres.panTo([lat, lon])
-    }
+mapPadres.setView([lat, lon], 17)
 
-  })
+})
 
 }
+
 // 📍
 function abrirEnMapa(){
 window.open(`https://www.google.com/maps?q=${latActual},${lonActual}`)
