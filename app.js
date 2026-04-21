@@ -232,9 +232,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 // 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
-if(listenerPadresActivo) return
-listenerPadresActivo = true
-
+// 🔥 crear mapa si no existe
 if(!mapPadres){
   mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
@@ -243,53 +241,53 @@ if(!mapPadres){
   }).addTo(mapPadres)
 }
 
-// 🔥 ARREGLA MAPA
+// 🔥 IMPORTANTE: arregla bug de mapa oculto
 setTimeout(()=>{
   mapPadres.invalidateSize()
-},300)
+},500)
 
-// 🔄 ESCUCHAR UBICACIÓN
+// 🔄 escuchar firebase SIEMPRE
 db.ref("ubicacion").on("value",(snap)=>{
 
-let data = snap.val()
-if(!data) return
+  let data = snap.val()
 
-// 🔐 VALIDAR TOKEN
-if(data.token !== TOKEN){
-  console.log("Acceso bloqueado")
-  return
-}
+  console.log("PADRES RECIBE:", data) // 👈 DEBUG
 
-let lat = data.lat
-let lon = data.lon
-let accuracy = data.accuracy || 20
+  if(!data){
+    ubicacionPadres.innerText = "Sin datos..."
+    return
+  }
 
-ubicacionPadres.innerText =
-  "Lat: " + lat +
-  "\nLon: " + lon +
-  "\nPrecisión: " + Math.round(accuracy) + "m"
+  let lat = data.lat
+  let lon = data.lon
+  let accuracy = data.accuracy || 20
 
-if(!markerPadres){
-  markerPadres = L.marker([lat, lon]).addTo(mapPadres)
-}else{
-  markerPadres.setLatLng([lat, lon])
-}
+  ubicacionPadres.innerText =
+    "Lat: " + lat +
+    "\nLon: " + lon +
+    "\nPrecisión: " + Math.round(accuracy) + "m"
 
-if(!circlePadres){
-  circlePadres = L.circle([lat, lon], {
-    radius: accuracy,
-    color: "blue",
-    fillOpacity: 0.2
-  }).addTo(mapPadres)
-}else{
-  circlePadres.setLatLng([lat, lon])
-  circlePadres.setRadius(accuracy)
-}
+  // 📍 marcador
+  if(!markerPadres){
+    markerPadres = L.marker([lat, lon]).addTo(mapPadres)
+  }else{
+    markerPadres.setLatLng([lat, lon])
+  }
 
-mapPadres.setView([lat, lon], 17)
+  // 🔵 círculo
+  if(!circlePadres){
+    circlePadres = L.circle([lat, lon], {
+      radius: accuracy
+    }).addTo(mapPadres)
+  }else{
+    circlePadres.setLatLng([lat, lon])
+    circlePadres.setRadius(accuracy)
+  }
+
+  // 🎯 centrar SIEMPRE (clave)
+  mapPadres.setView([lat, lon], 17)
 
 })
-
 }
 
 // 📍
