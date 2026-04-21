@@ -12,6 +12,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// 🔐 TOKEN SEGURIDAD
+const TOKEN = "trans2026_oran";
+
 let alumnos = []
 let latActual = null
 let lonActual = null
@@ -98,7 +101,7 @@ listaRuta.appendChild(li)
 })
 }
 
-// 🔄 CAMBIO DE PANTALLAS (ARREGLADO 🔥)
+// 🔄 CAMBIO DE PANTALLAS
 function mostrar(p){
 
 ["pantallaModo","pantallaInicio","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
@@ -155,7 +158,7 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER (FIX 🔥)
+// 📡 GPS CHOFER
 function iniciarGPS(){
 
 // 🔥 REINICIAR GPS
@@ -181,14 +184,15 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   latActual = lat
   lonActual = lon
 
-  console.log("GPS:", lat, lon)
+  console.log("ENVIANDO A FIREBASE:", lat, lon)
 
-  // 🔥 GUARDAR EN FIREBASE
+  // 🔥 GUARDA CON TOKEN
   db.ref("ubicacion").set({
     lat: lat,
     lon: lon,
     accuracy: accuracy,
-    time: Date.now()
+    time: Date.now(),
+    token: TOKEN
   })
 
   ubicacion.innerText =
@@ -225,7 +229,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
 }
 
-// 👨‍👩‍👧 PADRES (FIX 🔥)
+// 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
 if(listenerPadresActivo) return
@@ -239,7 +243,7 @@ if(!mapPadres){
   }).addTo(mapPadres)
 }
 
-// 🔥 arreglar tamaño mapa
+// 🔥 ARREGLA MAPA
 setTimeout(()=>{
   mapPadres.invalidateSize()
 },300)
@@ -249,6 +253,12 @@ db.ref("ubicacion").on("value",(snap)=>{
 
 let data = snap.val()
 if(!data) return
+
+// 🔐 VALIDAR TOKEN
+if(data.token !== TOKEN){
+  console.log("Acceso bloqueado")
+  return
+}
 
 let lat = data.lat
 let lon = data.lon
