@@ -1,3 +1,6 @@
+// 🔥 TOKEN DE SEGURIDAD
+const TOKEN = "trans_oran_2026"
+
 // 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBCd1wAUZo2HVUT-1-YuXgMukHlQP8I0Xo",
@@ -12,9 +15,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔐 TOKEN SEGURIDAD
-const TOKEN = "trans2026_oran";
-
 let alumnos = []
 let latActual = null
 let lonActual = null
@@ -28,7 +28,6 @@ let circleChofer = null
 let mapPadres = null
 let markerPadres = null
 let circlePadres = null
-let listenerPadresActivo = false
 
 // 🔥 CARGAR DATOS
 db.ref("alumnos").on("value", (snapshot) => {
@@ -158,15 +157,15 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER
+// 📡 GPS CHOFER (CON TOKEN 🔐)
 function iniciarGPS(){
 
-// 🔥 REINICIAR GPS
+// reiniciar GPS
 if(watchID !== null){
   navigator.geolocation.clearWatch(watchID)
 }
 
-// 🗺 MAPA
+// mapa
 if(!mapChofer){
   mapChofer = L.map('mapa').setView([0,0], 16)
 
@@ -184,9 +183,9 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   latActual = lat
   lonActual = lon
 
-  console.log("ENVIANDO A FIREBASE:", lat, lon)
+  console.log("GPS:", lat, lon)
 
-  // 🔥 GUARDA CON TOKEN
+  // 🔥 GUARDAR CON TOKEN
   db.ref("ubicacion").set({
     lat: lat,
     lon: lon,
@@ -229,10 +228,10 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
 }
 
-// 👨‍👩‍👧 PADRES
+// 👨‍👩‍👧 PADRES (ESTABLE 🔥)
 function iniciarPadres(){
 
-// 🔥 crear mapa si no existe
+// mapa
 if(!mapPadres){
   mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
@@ -241,17 +240,17 @@ if(!mapPadres){
   }).addTo(mapPadres)
 }
 
-// 🔥 IMPORTANTE: arregla bug de mapa oculto
+// arreglar bug visual
 setTimeout(()=>{
   mapPadres.invalidateSize()
 },500)
 
-// 🔄 escuchar firebase SIEMPRE
+// escuchar SIEMPRE
 db.ref("ubicacion").on("value",(snap)=>{
 
   let data = snap.val()
 
-  console.log("PADRES RECIBE:", data) // 👈 DEBUG
+  console.log("PADRES:", data)
 
   if(!data){
     ubicacionPadres.innerText = "Sin datos..."
@@ -267,14 +266,12 @@ db.ref("ubicacion").on("value",(snap)=>{
     "\nLon: " + lon +
     "\nPrecisión: " + Math.round(accuracy) + "m"
 
-  // 📍 marcador
   if(!markerPadres){
     markerPadres = L.marker([lat, lon]).addTo(mapPadres)
   }else{
     markerPadres.setLatLng([lat, lon])
   }
 
-  // 🔵 círculo
   if(!circlePadres){
     circlePadres = L.circle([lat, lon], {
       radius: accuracy
@@ -284,10 +281,10 @@ db.ref("ubicacion").on("value",(snap)=>{
     circlePadres.setRadius(accuracy)
   }
 
-  // 🎯 centrar SIEMPRE (clave)
   mapPadres.setView([lat, lon], 17)
 
 })
+
 }
 
 // 📍
