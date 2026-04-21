@@ -27,6 +27,32 @@ let markerPadres = null
 let circlePadres = null
 let listenerPadresActivo = false
 
+// 🔥 MODO APP
+function modoChofer(){
+  localStorage.setItem("modo","chofer")
+  document.getElementById("pantallaModo").style.display="none"
+  document.querySelector(".menu").style.display="flex"
+  mostrar("pantallaGPS")
+}
+
+function modoPadres(){
+  localStorage.setItem("modo","padre")
+  document.getElementById("pantallaModo").style.display="none"
+  document.querySelector(".menu").style.display="none" // 🔥 oculta menú
+  mostrar("pantallaPadres")
+}
+
+// 🔥 AUTO INICIO
+window.addEventListener("load", ()=>{
+  let modo = localStorage.getItem("modo")
+
+  if(modo === "chofer"){
+    modoChofer()
+  }else if(modo === "padre"){
+    modoPadres()
+  }
+})
+
 // 🔥 CARGAR DATOS
 db.ref("alumnos").on("value", (snapshot) => {
   alumnos = snapshot.val() || []
@@ -144,12 +170,11 @@ window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords
 })
 }
 
-// 📡 GPS CHOFER (PRO)
+// 📡 GPS CHOFER
 function iniciarGPS(){
 
 if(watchID !== null) return
 
-// 🗺 CREAR MAPA
 if(!mapChofer){
 mapChofer = L.map('mapa').setView([0,0], 16)
 
@@ -167,7 +192,6 @@ let accuracy = pos.coords.accuracy
 latActual = lat
 lonActual = lon
 
-// 🔥 GUARDAR
 db.ref("ubicacion").set({
 lat: lat,
 lon: lon,
@@ -175,30 +199,24 @@ accuracy: accuracy,
 time: Date.now()
 })
 
-// TEXTO
 ubicacion.innerText =
 "Lat: " + lat +
 "\nLon: " + lon +
 "\nPrecisión: " + Math.round(accuracy) + "m"
 
-// 📍 MARCADOR
 if(!markerChofer){
 markerChofer = L.marker([lat, lon]).addTo(mapChofer)
 }else{
 markerChofer.setLatLng([lat, lon])
 }
 
-// 🔵 CÍRCULO
 if(!circleChofer){
-circleChofer = L.circle([lat, lon], {
-radius: accuracy
-}).addTo(mapChofer)
+circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
 }else{
 circleChofer.setLatLng([lat, lon])
 circleChofer.setRadius(accuracy)
 }
 
-// 🎯 CENTRAR SOLO UNA VEZ
 if(!mapChofer._centrado){
 mapChofer.setView([lat, lon], 17)
 mapChofer._centrado = true
@@ -216,13 +234,12 @@ maximumAge:0
 
 }
 
-// 👨‍👩‍👧 PADRES (PRO)
+// 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
 if(listenerPadresActivo) return
 listenerPadresActivo = true
 
-// 🗺 MAPA
 if(!mapPadres){
 mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
@@ -231,7 +248,6 @@ attribution: '© OpenStreetMap'
 }).addTo(mapPadres)
 }
 
-// 🔄 ESCUCHAR FIREBASE
 db.ref("ubicacion").on("value",(snap)=>{
 
 let data = snap.val()
@@ -241,20 +257,17 @@ let lat = data.lat
 let lon = data.lon
 let accuracy = data.accuracy || 20
 
-// TEXTO
 ubicacionPadres.innerText =
 "Lat: " + lat +
 "\nLon: " + lon +
 "\nPrecisión: " + Math.round(accuracy) + "m"
 
-// 📍 MARCADOR
 if(!markerPadres){
 markerPadres = L.marker([lat, lon]).addTo(mapPadres)
 }else{
 markerPadres.setLatLng([lat, lon])
 }
 
-// 🔵 CÍRCULO
 if(!circlePadres){
 circlePadres = L.circle([lat, lon], {
 radius: accuracy,
@@ -266,7 +279,6 @@ circlePadres.setLatLng([lat, lon])
 circlePadres.setRadius(accuracy)
 }
 
-// 🎯 CENTRADO INTELIGENTE
 if(!mapPadres._centrado){
 mapPadres.setView([lat, lon], 17)
 mapPadres._centrado = true
