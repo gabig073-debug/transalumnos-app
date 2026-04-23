@@ -261,8 +261,6 @@ db.ref("ubicacion").on("value",(snap)=>{
   let lon = data.lon
   let accuracy = data.accuracy || 20
 
-  ubicacionPadres.innerText = "🚐 En camino..."
-
   if(!markerPadres){
     markerPadres = L.marker([lat, lon]).addTo(mapPadres)
   }else{
