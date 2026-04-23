@@ -31,24 +31,16 @@ function mostrar(p){
   ["pantallaModo","pantallaGPS","pantallaPadres"]
   .forEach(id => {
     let el = document.getElementById(id)
-    if(el) el.style.display="none"
+    if(el){
+      el.style.display = "none"
+    }
   })
 
   let pantalla = document.getElementById(p)
-  if(pantalla) pantalla.style.display="block"
+  if(pantalla){
+    pantalla.style.display = "block"
+  }
 
-  // 🔥 SOLO ESTO AGREGAMOS
-  setTimeout(()=>{
-    if(p==="pantallaGPS" && mapChofer){
-      mapChofer.invalidateSize()
-    }
-
-    if(p==="pantallaPadres" && mapPadres){
-      mapPadres.invalidateSize()
-    }
-  },300)
-
-  // 🔥 esto queda igual
   if(p==="pantallaGPS") iniciarGPS()
   if(p==="pantallaPadres") iniciarPadres()
 }
