@@ -112,7 +112,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   })
 
   if(!markerChofer){
-    markerChofer = L.marker([lat, lon]).addTo(mapChofer)
+    markerChofer = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapChofer)
   }else{
     markerChofer.setLatLng([lat, lon])
   }
@@ -172,7 +172,7 @@ db.ref("ubicacion").on("value",(snap)=>{
   let accuracy = data.accuracy || 20
 
   if(!markerPadres){
-    markerPadres = L.marker([lat, lon]).addTo(mapPadres)
+    markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
   }else{
     markerPadres.setLatLng([lat, lon])
   }
