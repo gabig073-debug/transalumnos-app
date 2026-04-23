@@ -20,13 +20,31 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.app {
+  height: 100vh;
+}
+
+/* 🔥 MAPAS FULL PANTALLA */
+#mapa, #mapaPadres {
+  height: 100vh;
+  width: 100%;
+}
+</style>
+
 </head>
 
 <body>
 
 <div class="app">
 
-<h1>🚐 TransAlumnos</h1>
+<h1 style="text-align:center;">🚐 TransAlumnos</h1>
 
 <!-- 🔥 MODO -->
 <div id="pantallaModo" class="container">
@@ -37,12 +55,12 @@
 </div>
 
 <!-- 📡 GPS CHOFER -->
-<div id="pantallaGPS" style="display:none" class="container">
+<div id="pantallaGPS" style="display:none">
   <div id="mapa"></div>
 </div>
 
 <!-- 👨‍👩‍👧 PADRES -->
-<div id="pantallaPadres" style="display:none" class="container">
+<div id="pantallaPadres" style="display:none">
   <div id="mapaPadres"></div>
 </div>
 
