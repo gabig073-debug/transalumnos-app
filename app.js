@@ -15,7 +15,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let alumnos = []
+// 📍 VARIABLES GPS
 let latActual = null
 let lonActual = null
 let watchID = null
@@ -29,88 +29,16 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
-// 🔥 CARGAR DATOS
-db.ref("alumnos").on("value", (snapshot) => {
-  alumnos = snapshot.val() || []
-  mostrarAlumnos()
-  actualizarDashboard()
-})
-
-// 👦 AGREGAR
-function agregarAlumno(){
-let nombre = nombreInput.value
-let direccion = direccionInput.value
-let telefono = telefonoInput.value
-
-if(!nombre || !direccion || !telefono){
-alert("Completá todo")
-return
-}
-
-alumnos.push({nombre,direccion,telefono})
-guardarDatos()
-
-nombreInput.value=""
-direccionInput.value=""
-telefonoInput.value=""
-}
-
-// 💾
-function guardarDatos(){
-db.ref("alumnos").set(alumnos)
-}
-
-// 📋
-function mostrarAlumnos(){
-lista.innerHTML=""
-
-alumnos.forEach((a,i)=>{
-let li = document.createElement("li")
-
-li.innerHTML = `
-<div class="card">
-<h3>${a.nombre}</h3>
-<p>${a.direccion}</p>
-
-<button onclick="whatsapp('${a.nombre}','${a.telefono}')">📱</button>
-<button onclick="editarAlumno(${i})">✏</button>
-<button onclick="eliminarAlumno(${i})">🗑</button>
-</div>
-`
-
-lista.appendChild(li)
-})
-}
-
-// 🚐
-function mostrarRuta(){
-listaRuta.innerHTML=""
-
-alumnos.forEach((a,i)=>{
-let li = document.createElement("li")
-
-li.innerHTML = `
-<div class="card">
-<h3>${i+1}. ${a.nombre}</h3>
-<p>${a.direccion}</p>
-</div>
-`
-
-listaRuta.appendChild(li)
-})
-}
-
-// 🔄 CAMBIO DE PANTALLAS
+// 🔄 CAMBIO DE PANTALLAS (simplificado)
 function mostrar(p){
 
-["pantallaModo","pantallaInicio","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
-.forEach(id => document.getElementById(id).style.display="none")
+  ["pantallaModo","pantallaGPS","pantallaPadres"]
+  .forEach(id => document.getElementById(id).style.display="none")
 
-document.getElementById(p).style.display="block"
+  document.getElementById(p).style.display="block"
 
-if(p==="pantallaRuta") mostrarRuta()
-if(p==="pantallaGPS") iniciarGPS()
-if(p==="pantallaPadres") iniciarPadres()
+  if(p==="pantallaGPS") iniciarGPS()
+  if(p==="pantallaPadres") iniciarPadres()
 }
 
 // 🚐 MODO CHOFER
@@ -121,40 +49,6 @@ function modoChofer(){
 // 👨‍👩‍👧 MODO PADRES
 function modoPadres(){
   mostrar("pantallaPadres")
-}
-
-// 📱 WHATSAPP
-function whatsapp(nombre,telefono){
-window.open("https://wa.me/54"+telefono+"?text="+encodeURIComponent("Hola, estamos llegando por "+nombre))
-}
-
-// 🗑
-function eliminarAlumno(i){
-if(confirm("Eliminar?")){
-alumnos.splice(i,1)
-guardarDatos()
-}
-}
-
-// ✏
-function editarAlumno(i){
-let n = prompt("Nombre", alumnos[i].nombre)
-if(n){
-alumnos[i].nombre = n
-guardarDatos()
-}
-}
-
-// 📊
-function actualizarDashboard(){
-totalAlumnos.innerText = alumnos.length
-}
-
-// 🗺
-function iniciarRuta(){
-navigator.geolocation.getCurrentPosition((pos)=>{
-window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords.longitude}/${alumnos.map(a=>a.direccion).join("/")}`)
-})
 }
 
 // 📡 GPS CHOFER (CON TOKEN 🔐)
@@ -247,15 +141,11 @@ db.ref("ubicacion").on("value",(snap)=>{
 
   console.log("PADRES:", data)
 
-  if(!data){
-    ubicacionPadres.innerText = "Sin datos..."
-    return
-  }
+  if(!data) return
 
   let lat = data.lat
   let lon = data.lon
   let accuracy = data.accuracy || 20
-
 
   if(!markerPadres){
     markerPadres = L.marker([lat, lon]).addTo(mapPadres)
@@ -276,11 +166,6 @@ db.ref("ubicacion").on("value",(snap)=>{
 
 })
 
-}
-
-// 📍
-function abrirEnMapa(){
-window.open(`https://www.google.com/maps?q=${latActual},${lonActual}`)
 }
 
 // 🔥 SERVICE WORKER
