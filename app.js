@@ -66,27 +66,31 @@ function modoPadres(){
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
+// 🔥 destruir mapa anterior (CLAVE)
+if(mapChofer){
+  mapChofer.remove()
+  mapChofer = null
+  markerChofer = null
+  circleChofer = null
+}
+
+// 🔥 crear mapa nuevo
+mapChofer = L.map('mapa').setView([0,0], 16)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(mapChofer)
+
+// 🔥 reiniciar GPS
 if(watchID !== null){
   navigator.geolocation.clearWatch(watchID)
 }
-
-if(!mapChofer){
-  mapChofer = L.map('mapa').setView([0,0], 16)
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(mapChofer)
-}
-
-setTimeout(()=> mapChofer.invalidateSize(), 300)
 
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
   let lat = pos.coords.latitude
   let lon = pos.coords.longitude
   let accuracy = pos.coords.accuracy
-
-  latActual = lat
-  lonActual = lon
 
   db.ref("ubicacion").set({
     lat,
@@ -111,29 +115,28 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   mapChofer.setView([lat, lon], 17)
 
-},
-(err)=> alert("GPS error: " + err.message),
-{
-  enableHighAccuracy:true,
-  timeout:10000,
-  maximumAge:0
 })
-
 }
 
 // 👨‍👩‍👧 PADRES (FIX CLAVE 🔥)
 function iniciarPadres(){
 
-if(!mapPadres){
-  mapPadres = L.map('mapaPadres').setView([0,0], 16)
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(mapPadres)
+// 🔥 destruir mapa anterior
+if(mapPadres){
+  mapPadres.remove()
+  mapPadres = null
+  markerPadres = null
+  circlePadres = null
 }
 
-// 🔥 ESTE ES CLAVE
-setTimeout(()=> mapPadres.invalidateSize(), 300)
+// 🔥 crear mapa nuevo
+mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(mapPadres)
+
+// 🔄 escuchar firebase
 db.ref("ubicacion").on("value",(snap)=>{
 
   let data = snap.val()
@@ -159,7 +162,6 @@ db.ref("ubicacion").on("value",(snap)=>{
   mapPadres.setView([lat, lon], 17)
 
 })
-
 }
 
 // 🔥 SERVICE WORKER
