@@ -28,7 +28,7 @@ let circlePadres = null
 // 🚐 ICONO COLECTIVO
 const iconoColectivo = L.icon({
   iconUrl: "colectivo.png",
-  iconSize: [40, 40],
+  iconSize: [60, 60],
   iconAnchor: [20, 20]
 })
 
