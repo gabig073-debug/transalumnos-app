@@ -25,6 +25,13 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
+// 🚐 ICONO COLECTIVO
+const iconoColectivo = L.icon({
+  iconUrl: "colectivo.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
+})
+
 // 🔄 CAMBIO DE PANTALLAS (FIX 🔥)
 function mostrar(p){
 
