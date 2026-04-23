@@ -28,21 +28,29 @@ let circlePadres = null
 // 🔄 CAMBIO DE PANTALLAS (FIX 🔥)
 function mostrar(p){
 
-  const pantallas = ["pantallaModo","pantallaGPS","pantallaPadres"]
-
-  pantallas.forEach(id=>{
+  ["pantallaModo","pantallaGPS","pantallaPadres"]
+  .forEach(id => {
     let el = document.getElementById(id)
-    if(el) el.style.display = "none"
+    if(el) el.style.display="none"
   })
 
   let pantalla = document.getElementById(p)
-  if(pantalla) pantalla.style.display = "block"
+  if(pantalla) pantalla.style.display="block"
 
-  // 🔥 IMPORTANTE: esperar que el DOM se vea
+  // 🔥 SOLO ESTO AGREGAMOS
   setTimeout(()=>{
-    if(p==="pantallaGPS") iniciarGPS()
-    if(p==="pantallaPadres") iniciarPadres()
-  },200)
+    if(p==="pantallaGPS" && mapChofer){
+      mapChofer.invalidateSize()
+    }
+
+    if(p==="pantallaPadres" && mapPadres){
+      mapPadres.invalidateSize()
+    }
+  },300)
+
+  // 🔥 esto queda igual
+  if(p==="pantallaGPS") iniciarGPS()
+  if(p==="pantallaPadres") iniciarPadres()
 }
 
 // 🚐
