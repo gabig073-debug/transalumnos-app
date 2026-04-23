@@ -194,11 +194,6 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
     token: TOKEN
   })
 
-  ubicacion.innerText =
-    "Lat: " + lat +
-    "\nLon: " + lon +
-    "\nPrecisión: " + Math.round(accuracy) + "m"
-
   if(!markerChofer){
     markerChofer = L.marker([lat, lon]).addTo(mapChofer)
   }else{
