@@ -1,26 +1,22 @@
-// 🔥 TOKEN DE SEGURIDAD
+// 🔥 TOKEN
 const TOKEN = "trans_oran_2026"
 
-// 🔥 FIREBASE CONFIG
+// 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBCd1wAUZo2HVUT-1-YuXgMukHlQP8I0Xo",
   authDomain: "transalumnos-7841c.firebaseapp.com",
   databaseURL: "https://transalumnos-7841c-default-rtdb.firebaseio.com",
-  projectId: "transalumnos-7841c",
-  storageBucket: "transalumnos-7841c.firebasestorage.app",
-  messagingSenderId: "979657843687",
-  appId: "1:979657843687:web:1e34083ad4f4905f159342"
+  projectId: "transalumnos-7841c"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 📍 VARIABLES GPS
+// 📍 VARIABLES
 let latActual = null
 let lonActual = null
 let watchID = null
 
-// 🗺 MAPAS
 let mapChofer = null
 let markerChofer = null
 let circleChofer = null
@@ -29,44 +25,51 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
-// 🔄 CAMBIO DE PANTALLAS (simplificado)
+// 🔄 CAMBIO DE PANTALLAS (FIX 🔥)
 function mostrar(p){
 
-  ["pantallaModo","pantallaGPS","pantallaPadres"]
-  .forEach(id => document.getElementById(id).style.display="none")
+  const pantallas = ["pantallaModo","pantallaGPS","pantallaPadres"]
 
-  document.getElementById(p).style.display="block"
+  pantallas.forEach(id=>{
+    let el = document.getElementById(id)
+    if(el) el.style.display = "none"
+  })
 
-  if(p==="pantallaGPS") iniciarGPS()
-  if(p==="pantallaPadres") iniciarPadres()
+  let pantalla = document.getElementById(p)
+  if(pantalla) pantalla.style.display = "block"
+
+  // 🔥 IMPORTANTE: esperar que el DOM se vea
+  setTimeout(()=>{
+    if(p==="pantallaGPS") iniciarGPS()
+    if(p==="pantallaPadres") iniciarPadres()
+  },200)
 }
 
-// 🚐 MODO CHOFER
+// 🚐
 function modoChofer(){
   mostrar("pantallaGPS")
 }
 
-// 👨‍👩‍👧 MODO PADRES
+// 👨‍👩‍👧
 function modoPadres(){
   mostrar("pantallaPadres")
 }
 
-// 📡 GPS CHOFER (CON TOKEN 🔐)
+// 📡 GPS CHOFER
 function iniciarGPS(){
 
-// reiniciar GPS
 if(watchID !== null){
   navigator.geolocation.clearWatch(watchID)
 }
 
-// mapa
 if(!mapChofer){
   mapChofer = L.map('mapa').setView([0,0], 16)
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(mapChofer)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(mapChofer)
 }
+
+setTimeout(()=> mapChofer.invalidateSize(), 300)
 
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
@@ -77,13 +80,10 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   latActual = lat
   lonActual = lon
 
-  console.log("GPS:", lat, lon)
-
-  // 🔥 GUARDAR CON TOKEN
   db.ref("ubicacion").set({
-    lat: lat,
-    lon: lon,
-    accuracy: accuracy,
+    lat,
+    lon,
+    accuracy,
     time: Date.now(),
     token: TOKEN
   })
@@ -95,9 +95,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   }
 
   if(!circleChofer){
-    circleChofer = L.circle([lat, lon], {
-      radius: accuracy
-    }).addTo(mapChofer)
+    circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
   }else{
     circleChofer.setLatLng([lat, lon])
     circleChofer.setRadius(accuracy)
@@ -106,9 +104,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   mapChofer.setView([lat, lon], 17)
 
 },
-(err)=>{
-  alert("Error GPS: " + err.message)
-},
+(err)=> alert("GPS error: " + err.message),
 {
   enableHighAccuracy:true,
   timeout:10000,
@@ -117,30 +113,22 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
 }
 
-// 👨‍👩‍👧 PADRES (ESTABLE 🔥)
+// 👨‍👩‍👧 PADRES (FIX CLAVE 🔥)
 function iniciarPadres(){
 
-// mapa
 if(!mapPadres){
   mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(mapPadres)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(mapPadres)
 }
 
-// arreglar bug visual
-setTimeout(()=>{
-  mapPadres.invalidateSize()
-},500)
+// 🔥 ESTE ES CLAVE
+setTimeout(()=> mapPadres.invalidateSize(), 300)
 
-// escuchar SIEMPRE
 db.ref("ubicacion").on("value",(snap)=>{
 
   let data = snap.val()
-
-  console.log("PADRES:", data)
-
   if(!data) return
 
   let lat = data.lat
@@ -154,9 +142,7 @@ db.ref("ubicacion").on("value",(snap)=>{
   }
 
   if(!circlePadres){
-    circlePadres = L.circle([lat, lon], {
-      radius: accuracy
-    }).addTo(mapPadres)
+    circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
   }else{
     circlePadres.setLatLng([lat, lon])
     circlePadres.setRadius(accuracy)
