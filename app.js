@@ -41,8 +41,11 @@ function mostrar(p){
     pantalla.style.display = "block"
   }
 
-  if(p==="pantallaGPS") iniciarGPS()
-  if(p==="pantallaPadres") iniciarPadres()
+  // 🔥 esperar a que el div sea visible
+  setTimeout(()=>{
+    if(p==="pantallaGPS") iniciarGPS()
+    if(p==="pantallaPadres") iniciarPadres()
+  }, 200)
 }
 
 // 🚐
@@ -58,7 +61,7 @@ function modoPadres(){
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
-// 🔥 destruir mapa anterior (CLAVE)
+// 🔥 destruir mapa anterior
 if(mapChofer){
   mapChofer.remove()
   mapChofer = null
@@ -66,12 +69,17 @@ if(mapChofer){
   circleChofer = null
 }
 
-// 🔥 crear mapa nuevo
+// 🔥 crear mapa
 mapChofer = L.map('mapa').setView([0,0], 16)
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap'
 }).addTo(mapChofer)
+
+// 🔥 FIX visual (clave)
+setTimeout(()=>{
+  mapChofer.invalidateSize()
+},300)
 
 // 🔥 reiniciar GPS
 if(watchID !== null){
@@ -84,6 +92,10 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   let lon = pos.coords.longitude
   let accuracy = pos.coords.accuracy
 
+  latActual = lat
+  lonActual = lon
+
+  // 🔥 guardar en firebase
   db.ref("ubicacion").set({
     lat,
     lon,
@@ -107,10 +119,19 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   mapChofer.setView([lat, lon], 17)
 
+},
+(err)=>{
+  alert("Error GPS: " + err.message)
+},
+{
+  enableHighAccuracy:true,
+  timeout:10000,
+  maximumAge:0
 })
+
 }
 
-// 👨‍👩‍👧 PADRES (FIX CLAVE 🔥)
+// 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
 // 🔥 destruir mapa anterior
@@ -121,12 +142,17 @@ if(mapPadres){
   circlePadres = null
 }
 
-// 🔥 crear mapa nuevo
+// 🔥 crear mapa
 mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap'
 }).addTo(mapPadres)
+
+// 🔥 FIX visual (clave)
+setTimeout(()=>{
+  mapPadres.invalidateSize()
+},300)
 
 // 🔄 escuchar firebase
 db.ref("ubicacion").on("value",(snap)=>{
@@ -154,6 +180,7 @@ db.ref("ubicacion").on("value",(snap)=>{
   mapPadres.setView([lat, lon], 17)
 
 })
+
 }
 
 // 🔥 SERVICE WORKER
