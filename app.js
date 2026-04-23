@@ -29,7 +29,7 @@ let circlePadres = null
 const iconoColectivo = L.icon({
   iconUrl: "colectivo.png",
   iconSize: [60, 60],
-  iconAnchor: [15, 15]
+  iconAnchor: [25, 25]
 })
 
 // 🔄 CAMBIO DE PANTALLAS (FIX 🔥)
