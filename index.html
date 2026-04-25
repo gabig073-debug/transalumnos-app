@@ -31,7 +31,6 @@ html, body {
   height: 100vh;
 }
 
-/* 🔥 MAPAS FULL PANTALLA */
 #mapa, #mapaPadres {
   height: 100vh;
   width: 100%;
@@ -47,16 +46,54 @@ html, body {
 <h1 style="text-align:center;">🚐 TransAlumnos</h1>
 
 <!-- 🔥 MODO -->
-<div id="pantallaModo" class="container">
+<div id="pantallaModo">
   <h2>Elegir modo</h2>
 
   <button onclick="modoChofer()">🚐 Chofer</button>
   <button onclick="modoPadres()">👨‍👩‍👧 Padres</button>
 </div>
 
+<!-- 👦 ALUMNOS -->
+<div id="pantallaAlumnos" style="display:none">
+
+  <h2>Alumnos</h2>
+
+  <input id="nombre" placeholder="Nombre">
+  <input id="direccion" placeholder="Dirección">
+  <input id="telefono" placeholder="Teléfono">
+
+  <button onclick="agregarAlumno()">Guardar</button>
+
+  <ul id="lista"></ul>
+
+  <button onclick="mostrar('pantallaRuta')">🛣 Ir a Ruta</button>
+  <button onclick="mostrar('pantallaGPS')">📡 Ir al GPS</button>
+
+</div>
+
+<!-- 🛣 RUTA -->
+<div id="pantallaRuta" style="display:none">
+
+  <h2>Ruta</h2>
+
+  <ul id="listaRuta"></ul>
+
+  <button onclick="mostrar('pantallaAlumnos')">👦 Alumnos</button>
+  <button onclick="mostrar('pantallaGPS')">📡 GPS</button>
+
+</div>
+
 <!-- 📡 GPS CHOFER -->
 <div id="pantallaGPS" style="display:none">
+
+  <div class="panel-chofer">
+    <button onclick="mostrar('pantallaAlumnos')">👦</button>
+    <button onclick="mostrar('pantallaRuta')">🛣</button>
+    <button onclick="volverModo()">🔙</button>
+  </div>
+
   <div id="mapa"></div>
+
 </div>
 
 <!-- 👨‍👩‍👧 PADRES -->
