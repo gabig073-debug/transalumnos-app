@@ -13,6 +13,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // 📍 VARIABLES
+let alumnos = []
 let latActual = null
 let lonActual = null
 let watchID = null
@@ -25,39 +26,40 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
-// 🚐 ICONO COLECTIVO
+// 🚐 ICONO
 const iconoColectivo = L.icon({
   iconUrl: "colectivo.png",
   iconSize: [60, 60],
   iconAnchor: [28, 28]
 })
 
-// 🔄 CAMBIO DE PANTALLAS (FIX 🔥)
+// 🔥 CARGAR ALUMNOS
+db.ref("alumnos").on("value", (snap)=>{
+  alumnos = snap.val() || []
+  mostrarAlumnos()
+})
+
+// 🔄 PANTALLAS
 function mostrar(p){
 
-  ["pantallaModo","pantallaGPS","pantallaPadres"]
-  .forEach(id => {
+  ["pantallaModo","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
+  .forEach(id=>{
     let el = document.getElementById(id)
-    if(el){
-      el.style.display = "none"
-    }
+    if(el) el.style.display="none"
   })
 
-  let pantalla = document.getElementById(p)
-  if(pantalla){
-    pantalla.style.display = "block"
-  }
+  document.getElementById(p).style.display="block"
 
-  // 🔥 esperar a que el div sea visible
   setTimeout(()=>{
     if(p==="pantallaGPS") iniciarGPS()
     if(p==="pantallaPadres") iniciarPadres()
-  }, 200)
+    if(p==="pantallaRuta") mostrarRuta()
+  },200)
 }
 
 // 🚐
 function modoChofer(){
-  mostrar("pantallaGPS")
+  mostrar("pantallaAlumnos")
 }
 
 // 👨‍👩‍👧
@@ -65,31 +67,106 @@ function modoPadres(){
   mostrar("pantallaPadres")
 }
 
+// 👦 AGREGAR
+function agregarAlumno(){
+
+  let nombre = document.getElementById("nombre").value
+  let direccion = document.getElementById("direccion").value
+  let telefono = document.getElementById("telefono").value
+
+  if(!nombre || !direccion || !telefono){
+    alert("Completá todo")
+    return
+  }
+
+  alumnos.push({nombre,direccion,telefono})
+
+  db.ref("alumnos").set(alumnos)
+
+  document.getElementById("nombre").value=""
+  document.getElementById("direccion").value=""
+  document.getElementById("telefono").value=""
+}
+
+// 📋 LISTA
+function mostrarAlumnos(){
+  let lista = document.getElementById("lista")
+  if(!lista) return
+
+  lista.innerHTML=""
+
+  alumnos.forEach((a,i)=>{
+    let li = document.createElement("li")
+
+    li.innerHTML = `
+      <b>${a.nombre}</b> - ${a.direccion}
+      <button onclick="eliminarAlumno(${i})">🗑</button>
+    `
+
+    lista.appendChild(li)
+  })
+}
+
+// 🗑
+function eliminarAlumno(i){
+  alumnos.splice(i,1)
+  db.ref("alumnos").set(alumnos)
+}
+
+// 🛣 RUTA
+function mostrarRuta(){
+
+  let lista = document.getElementById("listaRuta")
+  lista.innerHTML=""
+
+  alumnos.forEach((a,i)=>{
+    let li = document.createElement("li")
+
+    li.innerHTML = `
+      ${i+1}. ${a.nombre}
+      <button onclick="subir(${i})">⬆️</button>
+      <button onclick="bajar(${i})">⬇️</button>
+    `
+
+    lista.appendChild(li)
+  })
+}
+
+function subir(i){
+  if(i===0) return
+  let temp = alumnos[i]
+  alumnos[i]=alumnos[i-1]
+  alumnos[i-1]=temp
+  db.ref("alumnos").set(alumnos)
+  mostrarRuta()
+}
+
+function bajar(i){
+  if(i===alumnos.length-1) return
+  let temp = alumnos[i]
+  alumnos[i]=alumnos[i+1]
+  alumnos[i+1]=temp
+  db.ref("alumnos").set(alumnos)
+  mostrarRuta()
+}
+
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
-// 🔥 destruir mapa anterior
 if(mapChofer){
   mapChofer.remove()
-  mapChofer = null
-  markerChofer = null
-  circleChofer = null
+  mapChofer=null
+  markerChofer=null
+  circleChofer=null
 }
 
-// 🔥 crear mapa
 mapChofer = L.map('mapa').setView([0,0], 16)
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
-}).addTo(mapChofer)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapChofer)
 
-// 🔥 FIX visual (clave)
-setTimeout(()=>{
-  mapChofer.invalidateSize()
-},300)
+setTimeout(()=>mapChofer.invalidateSize(),300)
 
-// 🔥 reiniciar GPS
-if(watchID !== null){
+if(watchID!==null){
   navigator.geolocation.clearWatch(watchID)
 }
 
@@ -99,16 +176,8 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
   let lon = pos.coords.longitude
   let accuracy = pos.coords.accuracy
 
-  latActual = lat
-  lonActual = lon
-
-  // 🔥 guardar en firebase
   db.ref("ubicacion").set({
-    lat,
-    lon,
-    accuracy,
-    time: Date.now(),
-    token: TOKEN
+    lat,lon,accuracy,time:Date.now(),token:TOKEN
   })
 
   if(!markerChofer){
@@ -126,14 +195,6 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   mapChofer.setView([lat, lon], 17)
 
-},
-(err)=>{
-  alert("Error GPS: " + err.message)
-},
-{
-  enableHighAccuracy:true,
-  timeout:10000,
-  maximumAge:0
 })
 
 }
@@ -141,27 +202,19 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 // 👨‍👩‍👧 PADRES
 function iniciarPadres(){
 
-// 🔥 destruir mapa anterior
 if(mapPadres){
   mapPadres.remove()
-  mapPadres = null
-  markerPadres = null
-  circlePadres = null
+  mapPadres=null
+  markerPadres=null
+  circlePadres=null
 }
 
-// 🔥 crear mapa
 mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
-}).addTo(mapPadres)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
 
-// 🔥 FIX visual (clave)
-setTimeout(()=>{
-  mapPadres.invalidateSize()
-},300)
+setTimeout(()=>mapPadres.invalidateSize(),300)
 
-// 🔄 escuchar firebase
 db.ref("ubicacion").on("value",(snap)=>{
 
   let data = snap.val()
@@ -188,6 +241,11 @@ db.ref("ubicacion").on("value",(snap)=>{
 
 })
 
+}
+
+// 🔙
+function volverModo(){
+  location.reload()
 }
 
 // 🔥 SERVICE WORKER
