@@ -73,12 +73,19 @@ function agregarAlumno(){
   let direccion = document.getElementById("direccion").value
   let telefono = document.getElementById("telefono").value
 
-  if(!nombre || !direccion || !telefono){
-    alert("Completá todo")
+  if(!nombre || !direccion || !telefono || latSeleccion===null){
+    alert("Completá todo y elegí ubicación en el mapa")
     return
   }
 
-  alumnos.push({nombre, direccion, telefono})
+  alumnos.push({
+    nombre,
+    direccion,
+    telefono,
+    lat: latSeleccion,
+    lon: lonSeleccion
+  })
+
   db.ref("alumnos").set(alumnos)
 
   document.getElementById("nombre").value=""
@@ -97,10 +104,11 @@ function mostrarAlumnos(){
     let li = document.createElement("li")
 
     li.innerHTML = `
-      <b>${a.nombre}</b> - ${a.direccion}
-      <button onclick="eliminarAlumno(${i})">🗑</button>
+  <b>${a.nombre}</b><br>
+  📍 ${a.direccion}<br>
+  📞 ${a.telefono}
+`
     `
-
     lista.appendChild(li)
   })
 }
