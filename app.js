@@ -17,6 +17,12 @@ let alumnos = []
 let watchID = null
 let ultimaUbicacion = null
 
+let latSeleccion = null
+let lonSeleccion = null
+
+let mapSeleccion = null
+let markerSeleccion = null
+
 let mapChofer = null
 let markerChofer = null
 let circleChofer = null
@@ -24,10 +30,6 @@ let circleChofer = null
 let mapPadres = null
 let markerPadres = null
 let circlePadres = null
-
-let latSeleccion = null
-let lonSeleccion = null
-let markerSeleccion = null
 
 // 🚐 ICONO
 const iconoColectivo = L.icon({
@@ -45,7 +47,7 @@ db.ref("alumnos").on("value", (snap)=>{
 // 🔄 PANTALLAS
 function mostrar(p){
 
-  ["pantallaModo","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres"]
+  ["pantallaModo","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres","pantallaMapaSeleccion"]
   .forEach(id=>{
     let el = document.getElementById(id)
     if(el) el.style.display="none"
@@ -57,7 +59,7 @@ function mostrar(p){
     if(p==="pantallaGPS") iniciarGPS()
     if(p==="pantallaPadres") iniciarPadres()
     if(p==="pantallaRuta") mostrarRuta()
-    if(p==="pantallaAlumnos") iniciarMapaSeleccion()
+    if(p==="pantallaMapaSeleccion") iniciarMapaSeleccion()
   },200)
 }
 
@@ -71,29 +73,6 @@ function modoPadres(){
   mostrar("pantallaPadres")
 }
 
-// 🗺 MAPA PARA ELEGIR UBICACIÓN DEL ALUMNO
-function iniciarMapaSeleccion(){
-
-  if(window.mapaSelect) return
-
-  window.mapaSelect = L.map('mapaSeleccion').setView([-23.13, -64.32], 15)
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(window.mapaSelect)
-
-  window.mapaSelect.on("click", (e)=>{
-
-    latSeleccion = e.latlng.lat
-    lonSeleccion = e.latlng.lng
-
-    if(markerSeleccion){
-      markerSeleccion.setLatLng(e.latlng)
-    }else{
-      markerSeleccion = L.marker(e.latlng).addTo(window.mapaSelect)
-    }
-  })
-}
-
 // 👦 AGREGAR
 function agregarAlumno(){
 
@@ -102,7 +81,7 @@ function agregarAlumno(){
   let telefono = document.getElementById("telefono").value
 
   if(!nombre || !direccion || !telefono || latSeleccion===null){
-    alert("Completá todo y tocá el mapa")
+    alert("Completá todo y seleccioná ubicación en el mapa")
     return
   }
 
@@ -116,9 +95,15 @@ function agregarAlumno(){
 
   db.ref("alumnos").set(alumnos)
 
+  // reset selección
+  latSeleccion = null
+  lonSeleccion = null
+
   document.getElementById("nombre").value=""
   document.getElementById("direccion").value=""
   document.getElementById("telefono").value=""
+
+  alert("Alumno guardado con ubicación ✅")
 }
 
 // 📋 LISTA
@@ -133,7 +118,8 @@ function mostrarAlumnos(){
 
     li.innerHTML = `
       <b>${a.nombre}</b><br>
-      📍 ${a.direccion}
+      📍 ${a.direccion}<br>
+      📞 ${a.telefono}
       <button onclick="eliminarAlumno(${i})">🗑</button>
     `
 
@@ -230,21 +216,65 @@ function iniciarGPS(){
       mapChofer.setView([lat, lon], 17)
     }
 
-  },{
-    enableHighAccuracy:true
+  },
+  (err)=>{
+    console.log("GPS error:", err)
+  },
+  {
+    enableHighAccuracy:true,
+    timeout:15000,
+    maximumAge:0
   })
 }
 
-// 🚐 RUTA REAL PRO
-async function comenzarRuta(){
+// 👨‍👩‍👧 PADRES
+function iniciarPadres(){
 
-  if(!ultimaUbicacion){
-    alert("Esperando GPS...")
-    return
+if(mapPadres){
+  mapPadres.remove()
+  mapPadres=null
+  markerPadres=null
+  circlePadres=null
+}
+
+mapPadres = L.map('mapaPadres').setView([0,0], 16)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
+
+setTimeout(()=>mapPadres.invalidateSize(),300)
+
+db.ref("ubicacion").on("value",(snap)=>{
+
+  let data = snap.val()
+  if(!data) return
+
+  let lat = data.lat
+  let lon = data.lon
+  let accuracy = data.accuracy || 20
+
+  if(!markerPadres){
+    markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
+  }else{
+    markerPadres.setLatLng([lat, lon])
   }
 
-  if(alumnos.length < 1){
-    alert("No hay alumnos")
+  if(!circlePadres){
+    circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
+  }else{
+    circlePadres.setLatLng([lat, lon])
+    circlePadres.setRadius(accuracy)
+  }
+
+  mapPadres.setView([lat, lon], 17)
+
+})
+}
+
+// 🚐 RUTA REAL CON COORDENADAS (🔥 PRO)
+async function comenzarRuta(){
+
+  if(alumnos.length < 1 || !ultimaUbicacion){
+    alert("Falta GPS o alumnos")
     return
   }
 
@@ -258,56 +288,61 @@ async function comenzarRuta(){
     }
   })
 
-  try {
+  let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
 
-    let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
+  let res = await fetch(url)
+  let data = await res.json()
 
-    let res = await fetch(url)
-    let data = await res.json()
+  let rutaCoords = data.routes[0].geometry.coordinates
 
-    let ruta = data.routes[0].geometry.coordinates
+  let latlngs = rutaCoords.map(c => [c[1], c[0]])
 
-    let latlngs = ruta.map(c => [c[1], c[0]])
-
-    if(window.rutaLinea){
-      mapChofer.removeLayer(window.rutaLinea)
-    }
-
-    window.rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
-
-    mapChofer.fitBounds(window.rutaLinea.getBounds())
-
-  } catch(err){
-    console.log(err)
-    alert("Error generando ruta")
+  if(window.rutaLinea){
+    mapChofer.removeLayer(window.rutaLinea)
   }
+
+  window.rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
+
+  mapChofer.fitBounds(window.rutaLinea.getBounds())
 }
 
-// 👨‍👩‍👧 PADRES
-function iniciarPadres(){
+// 📍 MAPA SELECCIÓN
+function abrirMapaSeleccion(){
+  mostrar("pantallaMapaSeleccion")
+}
 
-  if(mapPadres){
-    mapPadres.remove()
+function iniciarMapaSeleccion(){
+
+  if(!mapSeleccion){
+    mapSeleccion = L.map('mapaSeleccion').setView([-23.13, -64.32], 15)
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+    .addTo(mapSeleccion)
+
+    mapSeleccion.on("click", (e)=>{
+
+      latSeleccion = e.latlng.lat
+      lonSeleccion = e.latlng.lng
+
+      if(markerSeleccion){
+        markerSeleccion.setLatLng(e.latlng)
+      }else{
+        markerSeleccion = L.marker(e.latlng).addTo(mapSeleccion)
+      }
+    })
   }
 
-  mapPadres = L.map('mapaPadres').setView([0,0], 16)
+  setTimeout(()=>mapSeleccion.invalidateSize(),300)
+}
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(mapPadres)
+function guardarUbicacion(){
+  if(latSeleccion===null){
+    alert("Tocá el mapa primero")
+    return
+  }
 
-  db.ref("ubicacion").on("value",(snap)=>{
-
-    let d = snap.val()
-    if(!d) return
-
-    if(!markerPadres){
-      markerPadres = L.marker([d.lat, d.lon], {icon: iconoColectivo}).addTo(mapPadres)
-    }else{
-      markerPadres.setLatLng([d.lat, d.lon])
-    }
-
-    mapPadres.setView([d.lat, d.lon], 17)
-  })
+  alert("Ubicación guardada 📍")
+  mostrar("pantallaAlumnos")
 }
 
 // 🔙
