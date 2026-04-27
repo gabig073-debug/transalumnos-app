@@ -50,11 +50,11 @@ function mostrar(p){
 
   document.getElementById(p).style.display="block"
 
-  setTimeout(()=>{
+  
     if(p==="pantallaGPS") iniciarGPS()
     if(p==="pantallaPadres") iniciarPadres()
     if(p==="pantallaRuta") mostrarRuta()
-  },200)
+
 }
 
 // 🚐
