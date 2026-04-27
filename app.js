@@ -251,7 +251,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-function comenzarRuta(){
+async function comenzarRuta(){
 
   if(alumnos.length < 1){
     alert("No hay alumnos")
@@ -260,64 +260,62 @@ function comenzarRuta(){
 
   window.rutaActiva = true
 
-  // ⚡ esperar a que exista el GPS (sin bloquear)
-  let esperarGPS = setInterval(()=>{
+  // esperar GPS listo
+  let intentos = 0
+  while(!markerChofer && intentos < 10){
+    await new Promise(r => setTimeout(r, 500))
+    intentos++
+  }
 
-    if(markerChofer){
+  if(!markerChofer){
+    alert("El GPS no está listo")
+    return
+  }
 
-      clearInterval(esperarGPS)
+  let pos = markerChofer.getLatLng()
 
-      let pos = markerChofer.getLatLng()
-      let puntos = [[pos.lat, pos.lng]]
+  let coords = [`${pos.lng},${pos.lat}`] // 🔥 OSRM usa LON,LAT
 
-      // 🔥 cargar direcciones UNA POR UNA sin trabar todo
-      let i = 0
+  try {
 
-      function cargarSiguiente(){
+    // 📍 convertir direcciones a coords
+    for (let a of alumnos){
 
-        if(i >= alumnos.length){
+      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
+      let data = await res.json()
 
-          // ✅ dibujar ruta final
-          if(window.rutaLinea){
-            mapChofer.removeLayer(window.rutaLinea)
-          }
-
-          window.rutaLinea = L.polyline(puntos, {
-            weight: 5
-          }).addTo(mapChofer)
-
-          mapChofer.fitBounds(window.rutaLinea.getBounds())
-          return
-        }
-
-        let a = alumnos[i]
-
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
-        .then(res => res.json())
-        .then(data => {
-
-          if(data && data[0]){
-            puntos.push([
-              parseFloat(data[0].lat),
-              parseFloat(data[0].lon)
-            ])
-          }
-
-          i++
-          setTimeout(cargarSiguiente, 300) // 🔥 evita que se congele
-
-        })
-        .catch(()=>{
-          i++
-          setTimeout(cargarSiguiente, 300)
-        })
+      if(data && data[0]){
+        coords.push(`${data[0].lon},${data[0].lat}`)
       }
-
-      cargarSiguiente()
     }
 
-  }, 300)
+    // 🚀 pedir ruta real a OSRM
+    let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
+
+    let rutaRes = await fetch(url)
+    let rutaData = await rutaRes.json()
+
+    let rutaCoords = rutaData.routes[0].geometry.coordinates
+
+    // 🔄 convertir a formato Leaflet
+    let latlngs = rutaCoords.map(c => [c[1], c[0]])
+
+    if(window.rutaLinea){
+      mapChofer.removeLayer(window.rutaLinea)
+    }
+
+    window.rutaLinea = L.polyline(latlngs, {
+      weight: 5
+    }).addTo(mapChofer)
+
+    mapChofer.fitBounds(window.rutaLinea.getBounds())
+
+  } catch(err){
+    console.log("Error ruta:", err)
+    alert("Error al generar ruta")
+  }
 }
+
 // 🔙
 function volverModo(){
   location.reload()
