@@ -233,7 +233,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA SIN TILDES 🔥
+// 🚐 COMENZAR RUTA (FIX ANTI TILDE 🔥)
 async function comenzarRuta(){
 
   if(alumnos.length < 1){
@@ -241,22 +241,21 @@ async function comenzarRuta(){
     return
   }
 
-  // 🔥 usar ubicación actual del GPS en vivo
+  // 🔥 activar modo ruta
+  window.rutaActiva = true
+
+  // 🔥 usar ubicación actual del marcador (NO pedir GPS de nuevo)
   if(!markerChofer){
     alert("Esperando GPS...")
     return
   }
 
   let pos = markerChofer.getLatLng()
-
-  let puntos = []
+  let puntos = [[pos.lat, pos.lng]]
 
   try {
 
-    // 🔥 punto inicial = ubicación actual (sin pedir GPS de nuevo)
-    puntos.push([pos.lat, pos.lng])
-
-    // 🔥 cargar alumnos SIN bloquear todo
+    // 🔥 cargar alumnos UNO POR UNO (no explota el celu)
     for (let a of alumnos){
 
       let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
@@ -270,17 +269,10 @@ async function comenzarRuta(){
       }
     }
 
-    if(puntos.length < 2){
-      alert("No se pudo armar la ruta")
-      return
-    }
-
-    // 🔥 borrar anterior
     if(window.rutaLinea){
       mapChofer.removeLayer(window.rutaLinea)
     }
 
-    // 🔥 dibujar ruta
     window.rutaLinea = L.polyline(puntos, {
       weight: 5
     }).addTo(mapChofer)
