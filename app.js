@@ -25,6 +25,10 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
+let latSeleccion = null
+let lonSeleccion = null
+let markerSeleccion = null
+
 // 🚐 ICONO
 const iconoColectivo = L.icon({
   iconUrl: "colectivo.png",
@@ -53,6 +57,7 @@ function mostrar(p){
     if(p==="pantallaGPS") iniciarGPS()
     if(p==="pantallaPadres") iniciarPadres()
     if(p==="pantallaRuta") mostrarRuta()
+    if(p==="pantallaAlumnos") iniciarMapaSeleccion()
   },200)
 }
 
@@ -66,6 +71,29 @@ function modoPadres(){
   mostrar("pantallaPadres")
 }
 
+// 🗺 MAPA PARA ELEGIR UBICACIÓN DEL ALUMNO
+function iniciarMapaSeleccion(){
+
+  if(window.mapaSelect) return
+
+  window.mapaSelect = L.map('mapaSeleccion').setView([-23.13, -64.32], 15)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(window.mapaSelect)
+
+  window.mapaSelect.on("click", (e)=>{
+
+    latSeleccion = e.latlng.lat
+    lonSeleccion = e.latlng.lng
+
+    if(markerSeleccion){
+      markerSeleccion.setLatLng(e.latlng)
+    }else{
+      markerSeleccion = L.marker(e.latlng).addTo(window.mapaSelect)
+    }
+  })
+}
+
 // 👦 AGREGAR
 function agregarAlumno(){
 
@@ -74,7 +102,7 @@ function agregarAlumno(){
   let telefono = document.getElementById("telefono").value
 
   if(!nombre || !direccion || !telefono || latSeleccion===null){
-    alert("Completá todo y elegí ubicación en el mapa")
+    alert("Completá todo y tocá el mapa")
     return
   }
 
@@ -104,11 +132,11 @@ function mostrarAlumnos(){
     let li = document.createElement("li")
 
     li.innerHTML = `
-  <b>${a.nombre}</b><br>
-  📍 ${a.direccion}<br>
-  📞 ${a.telefono}
-`
+      <b>${a.nombre}</b><br>
+      📍 ${a.direccion}
+      <button onclick="eliminarAlumno(${i})">🗑</button>
     `
+
     lista.appendChild(li)
   })
 }
@@ -132,7 +160,6 @@ function mostrarRuta(){
       ${i+1}. ${a.nombre}
       <button onclick="subir(${i})">⬆️</button>
       <button onclick="bajar(${i})">⬇️</button>
-      <button onclick="comenzarRuta()">▶️</button>
     `
 
     lista.appendChild(li)
@@ -153,10 +180,9 @@ function bajar(i){
   mostrarRuta()
 }
 
-// 📡 GPS CHOFER (FIX TOTAL)
+// 📡 GPS CHOFER
 function iniciarGPS(){
 
-  // 🔥 reiniciar SIEMPRE (clave para celular)
   if(watchID !== null){
     navigator.geolocation.clearWatch(watchID)
     watchID = null
@@ -177,7 +203,6 @@ function iniciarGPS(){
     let lon = pos.coords.longitude
     let accuracy = pos.coords.accuracy
 
-    // 🔥 GUARDAR UBICACIÓN REAL
     ultimaUbicacion = {lat, lon}
 
     db.ref("ubicacion").set({
@@ -205,61 +230,18 @@ function iniciarGPS(){
       mapChofer.setView([lat, lon], 17)
     }
 
-  },
-  (err)=>{
-    console.log("GPS error:", err)
-  },
-  {
-    enableHighAccuracy:true,
-    timeout:15000,
-    maximumAge:0
+  },{
+    enableHighAccuracy:true
   })
 }
 
-// 👨‍👩‍👧 PADRES
-function iniciarPadres(){
-
-if(mapPadres){
-  mapPadres.remove()
-  mapPadres=null
-  markerPadres=null
-  circlePadres=null
-}
-
-mapPadres = L.map('mapaPadres').setView([0,0], 16)
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
-
-setTimeout(()=>mapPadres.invalidateSize(),300)
-
-db.ref("ubicacion").on("value",(snap)=>{
-
-  let data = snap.val()
-  if(!data) return
-
-  let lat = data.lat
-  let lon = data.lon
-  let accuracy = data.accuracy || 20
-
-  if(!markerPadres){
-    markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
-  }else{
-    markerPadres.setLatLng([lat, lon])
-  }
-
-  if(!circlePadres){
-    circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
-  }else{
-    circlePadres.setLatLng([lat, lon])
-    circlePadres.setRadius(accuracy)
-  }
-
-  mapPadres.setView([lat, lon], 17)
-
-})
-}
-
+// 🚐 RUTA REAL PRO
 async function comenzarRuta(){
+
+  if(!ultimaUbicacion){
+    alert("Esperando GPS...")
+    return
+  }
 
   if(alumnos.length < 1){
     alert("No hay alumnos")
@@ -268,70 +250,67 @@ async function comenzarRuta(){
 
   window.rutaActiva = true
 
-  // esperar GPS listo
-  let intentos = 0
-  while(!markerChofer && intentos < 10){
-    await new Promise(r => setTimeout(r, 500))
-    intentos++
-  }
+  let coords = [`${ultimaUbicacion.lon},${ultimaUbicacion.lat}`]
 
-  if(!markerChofer){
-    alert("El GPS no está listo")
-    return
-  }
-
-  let pos = markerChofer.getLatLng()
-
-  let coords = [`${pos.lng},${pos.lat}`] // 🔥 OSRM usa LON,LAT
+  alumnos.forEach(a=>{
+    if(a.lat && a.lon){
+      coords.push(`${a.lon},${a.lat}`)
+    }
+  })
 
   try {
 
-    // 📍 convertir direcciones a coords
-    for (let a of alumnos){
-
-      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
-      let data = await res.json()
-
-      if(data && data[0]){
-        coords.push(`${data[0].lon},${data[0].lat}`)
-      }
-    }
-
-    // 🚀 pedir ruta real a OSRM
     let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
 
-    let rutaRes = await fetch(url)
-    let rutaData = await rutaRes.json()
+    let res = await fetch(url)
+    let data = await res.json()
 
-    let rutaCoords = rutaData.routes[0].geometry.coordinates
+    let ruta = data.routes[0].geometry.coordinates
 
-    // 🔄 convertir a formato Leaflet
-    let latlngs = rutaCoords.map(c => [c[1], c[0]])
+    let latlngs = ruta.map(c => [c[1], c[0]])
 
     if(window.rutaLinea){
       mapChofer.removeLayer(window.rutaLinea)
     }
 
-    window.rutaLinea = L.polyline(latlngs, {
-      weight: 5
-    }).addTo(mapChofer)
+    window.rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
 
     mapChofer.fitBounds(window.rutaLinea.getBounds())
 
   } catch(err){
-    console.log("Error ruta:", err)
-    alert("Error al generar ruta")
+    console.log(err)
+    alert("Error generando ruta")
   }
+}
+
+// 👨‍👩‍👧 PADRES
+function iniciarPadres(){
+
+  if(mapPadres){
+    mapPadres.remove()
+  }
+
+  mapPadres = L.map('mapaPadres').setView([0,0], 16)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(mapPadres)
+
+  db.ref("ubicacion").on("value",(snap)=>{
+
+    let d = snap.val()
+    if(!d) return
+
+    if(!markerPadres){
+      markerPadres = L.marker([d.lat, d.lon], {icon: iconoColectivo}).addTo(mapPadres)
+    }else{
+      markerPadres.setLatLng([d.lat, d.lon])
+    }
+
+    mapPadres.setView([d.lat, d.lon], 17)
+  })
 }
 
 // 🔙
 function volverModo(){
   location.reload()
-}
-
-// 🔥 SERVICE WORKER
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-  });
 }
