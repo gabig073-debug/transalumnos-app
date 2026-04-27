@@ -233,8 +233,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA (FIX REAL 🔥)
-// 🚐 COMENZAR RUTA DESDE MI GPS 🔥
+// 🚐 COMENZAR RUTA SIN TILDES 🔥
 async function comenzarRuta(){
 
   if(alumnos.length < 1){
@@ -242,37 +241,32 @@ async function comenzarRuta(){
     return
   }
 
-  mostrar("pantallaGPS")
+  // 🔥 usar ubicación actual del GPS en vivo
+  if(!markerChofer){
+    alert("Esperando GPS...")
+    return
+  }
 
-  // ⏳ esperar mapa
-  await new Promise(r => setTimeout(r, 800))
+  let pos = markerChofer.getLatLng()
 
   let puntos = []
 
   try {
 
-    // 🔥 1. OBTENER TU UBICACIÓN ACTUAL
-    let pos = await new Promise((resolve, reject)=>{
-      navigator.geolocation.getCurrentPosition(resolve, reject)
-    })
+    // 🔥 punto inicial = ubicación actual (sin pedir GPS de nuevo)
+    puntos.push([pos.lat, pos.lng])
 
-    let latActual = pos.coords.latitude
-    let lonActual = pos.coords.longitude
-
-    // 🔥 PRIMER PUNTO = VOS
-    puntos.push([latActual, lonActual])
-
-    // 🔥 2. CARGAR ALUMNOS
+    // 🔥 cargar alumnos SIN bloquear todo
     for (let a of alumnos){
 
       let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
       let data = await res.json()
 
       if(data && data[0]){
-        let lat = parseFloat(data[0].lat)
-        let lon = parseFloat(data[0].lon)
-
-        puntos.push([lat, lon])
+        puntos.push([
+          parseFloat(data[0].lat),
+          parseFloat(data[0].lon)
+        ])
       }
     }
 
@@ -288,16 +282,13 @@ async function comenzarRuta(){
 
     // 🔥 dibujar ruta
     window.rutaLinea = L.polyline(puntos, {
-      color: "blue",
       weight: 5
     }).addTo(mapChofer)
 
-    // 🔥 ajustar vista
     mapChofer.fitBounds(window.rutaLinea.getBounds())
 
   } catch(err){
     console.log("Error ruta:", err)
-    alert("Error al obtener ubicación o direcciones")
   }
 }
 // 🔙
