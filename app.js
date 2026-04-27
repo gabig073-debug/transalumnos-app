@@ -251,55 +251,73 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA (FIX DEFINITIVO)
-async function comenzarRuta(){
+function comenzarRuta(){
 
   if(alumnos.length < 1){
     alert("No hay alumnos")
     return
   }
 
-  if(!ultimaUbicacion){
-    alert("Esperando GPS...")
-    return
-  }
-
   window.rutaActiva = true
 
-  let puntos = [
-    [ultimaUbicacion.lat, ultimaUbicacion.lon]
-  ]
+  // ⚡ esperar a que exista el GPS (sin bloquear)
+  let esperarGPS = setInterval(()=>{
 
-  try {
+    if(markerChofer){
 
-    for (let a of alumnos){
+      clearInterval(esperarGPS)
 
-      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
-      let data = await res.json()
+      let pos = markerChofer.getLatLng()
+      let puntos = [[pos.lat, pos.lng]]
 
-      if(data && data[0]){
-        puntos.push([
-          parseFloat(data[0].lat),
-          parseFloat(data[0].lon)
-        ])
+      // 🔥 cargar direcciones UNA POR UNA sin trabar todo
+      let i = 0
+
+      function cargarSiguiente(){
+
+        if(i >= alumnos.length){
+
+          // ✅ dibujar ruta final
+          if(window.rutaLinea){
+            mapChofer.removeLayer(window.rutaLinea)
+          }
+
+          window.rutaLinea = L.polyline(puntos, {
+            weight: 5
+          }).addTo(mapChofer)
+
+          mapChofer.fitBounds(window.rutaLinea.getBounds())
+          return
+        }
+
+        let a = alumnos[i]
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
+        .then(res => res.json())
+        .then(data => {
+
+          if(data && data[0]){
+            puntos.push([
+              parseFloat(data[0].lat),
+              parseFloat(data[0].lon)
+            ])
+          }
+
+          i++
+          setTimeout(cargarSiguiente, 300) // 🔥 evita que se congele
+
+        })
+        .catch(()=>{
+          i++
+          setTimeout(cargarSiguiente, 300)
+        })
       }
+
+      cargarSiguiente()
     }
 
-    if(window.rutaLinea){
-      mapChofer.removeLayer(window.rutaLinea)
-    }
-
-    window.rutaLinea = L.polyline(puntos, {
-      weight: 5
-    }).addTo(mapChofer)
-
-    mapChofer.fitBounds(window.rutaLinea.getBounds())
-
-  } catch(err){
-    console.log("Error ruta:", err)
-  }
+  }, 300)
 }
-
 // 🔙
 function volverModo(){
   location.reload()
