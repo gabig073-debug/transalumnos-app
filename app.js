@@ -14,8 +14,6 @@ const db = firebase.database();
 
 // 📍 VARIABLES
 let alumnos = []
-let latActual = null
-let lonActual = null
 let watchID = null
 
 let mapChofer = null
@@ -50,11 +48,11 @@ function mostrar(p){
 
   document.getElementById(p).style.display="block"
 
-  
+  setTimeout(()=>{
     if(p==="pantallaGPS") iniciarGPS()
     if(p==="pantallaPadres") iniciarPadres()
     if(p==="pantallaRuta") mostrarRuta()
-
+  },200)
 }
 
 // 🚐
@@ -79,27 +77,13 @@ function agregarAlumno(){
     return
   }
 
-  let nuevo = {nombre, direccion, telefono}
-
-  alumnos.push(nuevo)
-
-  console.log("Guardando alumno:", alumnos)
+  alumnos.push({nombre, direccion, telefono})
 
   db.ref("alumnos").set(alumnos)
-  .then(()=>{
-    console.log("✅ Guardado en Firebase")
 
-    document.getElementById("nombre").value=""
-    document.getElementById("direccion").value=""
-    document.getElementById("telefono").value=""
-
-    mostrarAlumnos()
-    mostrarRuta()
-  })
-  .catch((err)=>{
-    console.log("❌ Error Firebase:", err)
-    alert("Error al guardar")
-  })
+  document.getElementById("nombre").value=""
+  document.getElementById("direccion").value=""
+  document.getElementById("telefono").value=""
 }
 
 // 📋 LISTA
@@ -148,18 +132,14 @@ function mostrarRuta(){
 
 function subir(i){
   if(i===0) return
-  let temp = alumnos[i]
-  alumnos[i]=alumnos[i-1]
-  alumnos[i-1]=temp
+  [alumnos[i], alumnos[i-1]] = [alumnos[i-1], alumnos[i]]
   db.ref("alumnos").set(alumnos)
   mostrarRuta()
 }
 
 function bajar(i){
   if(i===alumnos.length-1) return
-  let temp = alumnos[i]
-  alumnos[i]=alumnos[i+1]
-  alumnos[i+1]=temp
+  [alumnos[i], alumnos[i+1]] = [alumnos[i+1], alumnos[i]]
   db.ref("alumnos").set(alumnos)
   mostrarRuta()
 }
@@ -167,29 +147,23 @@ function bajar(i){
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
-// 🔥 NO reiniciar si ya está activo
 if(watchID !== null) return
 
-// 🗺 crear mapa UNA sola vez
 if(!mapChofer){
   mapChofer = L.map('mapa').setView([0,0], 16)
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
   .addTo(mapChofer)
 
-  setTimeout(()=>{
-    mapChofer.invalidateSize()
-  },300)
+  setTimeout(()=>mapChofer.invalidateSize(),300)
 }
 
-// 📡 iniciar GPS UNA sola vez
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
   let lat = pos.coords.latitude
   let lon = pos.coords.longitude
   let accuracy = pos.coords.accuracy
 
-  // 🔥 guardar en firebase
   db.ref("ubicacion").set({
     lat,
     lon,
@@ -198,18 +172,14 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
     token: TOKEN
   })
 
-  // 🚐 marcador
   if(!markerChofer){
-    markerChofer = L.marker([lat, lon], {icon: iconoColectivo})
-    .addTo(mapChofer)
+    markerChofer = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapChofer)
   }else{
     markerChofer.setLatLng([lat, lon])
   }
 
-  // 🔵 círculo
   if(!circleChofer){
-    circleChofer = L.circle([lat, lon], {radius: accuracy})
-    .addTo(mapChofer)
+    circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
   }else{
     circleChofer.setLatLng([lat, lon])
     circleChofer.setRadius(accuracy)
@@ -217,16 +187,7 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   mapChofer.setView([lat, lon], 17)
 
-},
-(err)=>{
-  console.log("GPS error:", err)
-},
-{
-  enableHighAccuracy:true,
-  timeout:10000,
-  maximumAge:0
 })
-
 }
 
 // 👨‍👩‍👧 PADRES
@@ -270,7 +231,45 @@ db.ref("ubicacion").on("value",(snap)=>{
   mapPadres.setView([lat, lon], 17)
 
 })
+}
 
+// 🚐 COMENZAR RUTA (DIBUJA LÍNEA)
+function comenzarRuta(){
+
+  if(alumnos.length < 2){
+    alert("Necesitás al menos 2 alumnos")
+    return
+  }
+
+  mostrar("pantallaGPS")
+
+  setTimeout(()=>{
+
+    let puntos = []
+
+    alumnos.forEach(a=>{
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
+      .then(res=>res.json())
+      .then(data=>{
+        if(data[0]){
+          let lat = parseFloat(data[0].lat)
+          let lon = parseFloat(data[0].lon)
+
+          puntos.push([lat, lon])
+
+          if(puntos.length >= 2){
+
+            if(window.rutaLinea){
+              mapChofer.removeLayer(window.rutaLinea)
+            }
+
+            window.rutaLinea = L.polyline(puntos).addTo(mapChofer)
+          }
+        }
+      })
+    })
+
+  },500)
 }
 
 // 🔙
