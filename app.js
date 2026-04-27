@@ -79,18 +79,27 @@ function agregarAlumno(){
     return
   }
 
-  alumnos.push({nombre,direccion,telefono})
+  let nuevo = {nombre, direccion, telefono}
+
+  alumnos.push(nuevo)
+
+  console.log("Guardando alumno:", alumnos)
 
   db.ref("alumnos").set(alumnos)
+  .then(()=>{
+    console.log("✅ Guardado en Firebase")
 
-  // 🔥 limpiar
-  document.getElementById("nombre").value=""
-  document.getElementById("direccion").value=""
-  document.getElementById("telefono").value=""
+    document.getElementById("nombre").value=""
+    document.getElementById("direccion").value=""
+    document.getElementById("telefono").value=""
 
-  // 🔥 ACTUALIZAR EN EL MOMENTO
-  mostrarAlumnos()
-  mostrarRuta()
+    mostrarAlumnos()
+    mostrarRuta()
+  })
+  .catch((err)=>{
+    console.log("❌ Error Firebase:", err)
+    alert("Error al guardar")
+  })
 }
 
 // 📋 LISTA
