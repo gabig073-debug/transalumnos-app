@@ -83,9 +83,14 @@ function agregarAlumno(){
 
   db.ref("alumnos").set(alumnos)
 
+  // 🔥 limpiar
   document.getElementById("nombre").value=""
   document.getElementById("direccion").value=""
   document.getElementById("telefono").value=""
+
+  // 🔥 ACTUALIZAR EN EL MOMENTO
+  mostrarAlumnos()
+  mostrarRuta()
 }
 
 // 📋 LISTA
