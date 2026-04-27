@@ -31,6 +31,8 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 
+let capasAlumnos = []
+
 // 🚐 ICONO
 const iconoColectivo = L.icon({
   iconUrl: "colectivo.png",
@@ -95,7 +97,6 @@ function agregarAlumno(){
 
   db.ref("alumnos").set(alumnos)
 
-  // reset selección
   latSeleccion = null
   lonSeleccion = null
 
@@ -166,6 +167,36 @@ function bajar(i){
   mostrarRuta()
 }
 
+// 🔴 DIBUJAR ALUMNOS
+function dibujarAlumnosEnMapa(){
+
+  if(!mapChofer) return
+
+  capasAlumnos.forEach(c => mapChofer.removeLayer(c))
+  capasAlumnos = []
+
+  alumnos.forEach(a=>{
+
+    if(a.lat && a.lon){
+
+      let circulo = L.circle([a.lat, a.lon], {
+        radius: 20,
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.5
+      }).addTo(mapChofer)
+
+      let popup = L.marker([a.lat, a.lon])
+        .bindPopup(`<b>${a.nombre}</b><br>${a.direccion}`)
+        .addTo(mapChofer)
+
+      capasAlumnos.push(circulo)
+      capasAlumnos.push(popup)
+    }
+
+  })
+}
+
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
@@ -215,6 +246,8 @@ function iniciarGPS(){
     if(!window.rutaActiva){
       mapChofer.setView([lat, lon], 17)
     }
+
+    dibujarAlumnosEnMapa()
 
   },
   (err)=>{
@@ -270,7 +303,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 RUTA REAL CON COORDENADAS (🔥 PRO)
+// 🚐 RUTA REAL
 async function comenzarRuta(){
 
   if(alumnos.length < 1 || !ultimaUbicacion){
@@ -294,7 +327,6 @@ async function comenzarRuta(){
   let data = await res.json()
 
   let rutaCoords = data.routes[0].geometry.coordinates
-
   let latlngs = rutaCoords.map(c => [c[1], c[0]])
 
   if(window.rutaLinea){
@@ -304,6 +336,8 @@ async function comenzarRuta(){
   window.rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
 
   mapChofer.fitBounds(window.rutaLinea.getBounds())
+
+  dibujarAlumnosEnMapa()
 }
 
 // 📍 MAPA SELECCIÓN
