@@ -233,8 +233,8 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA (DIBUJA LÍNEA)
-function comenzarRuta(){
+// 🚐 COMENZAR RUTA (FIX REAL 🔥)
+async function comenzarRuta(){
 
   if(alumnos.length < 2){
     alert("Necesitás al menos 2 alumnos")
@@ -243,33 +243,46 @@ function comenzarRuta(){
 
   mostrar("pantallaGPS")
 
-  setTimeout(()=>{
+  await new Promise(r => setTimeout(r, 800))
 
-    let puntos = []
+  let puntos = []
 
-    alumnos.forEach(a=>{
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
-      .then(res=>res.json())
-      .then(data=>{
-        if(data[0]){
-          let lat = parseFloat(data[0].lat)
-          let lon = parseFloat(data[0].lon)
+  try {
 
-          puntos.push([lat, lon])
+    for (let a of alumnos){
 
-          if(puntos.length >= 2){
+      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
+      let data = await res.json()
 
-            if(window.rutaLinea){
-              mapChofer.removeLayer(window.rutaLinea)
-            }
+      if(data && data[0]){
+        let lat = parseFloat(data[0].lat)
+        let lon = parseFloat(data[0].lon)
 
-            window.rutaLinea = L.polyline(puntos).addTo(mapChofer)
-          }
-        }
-      })
-    })
+        puntos.push([lat, lon])
+      }
 
-  },500)
+    }
+
+    if(puntos.length < 2){
+      alert("No se pudieron obtener ubicaciones")
+      return
+    }
+
+    if(window.rutaLinea){
+      mapChofer.removeLayer(window.rutaLinea)
+    }
+
+    window.rutaLinea = L.polyline(puntos, {
+      color: "blue",
+      weight: 5
+    }).addTo(mapChofer)
+
+    mapChofer.fitBounds(window.rutaLinea.getBounds())
+
+  } catch(err){
+    console.log("Error ruta:", err)
+    alert("Error al generar la ruta")
+  }
 }
 
 // 🔙
