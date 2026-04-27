@@ -235,7 +235,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA (FIX ANTI TILDE 🔥)
+// 🚐 COMENZAR RUTA (ESPERA GPS REAL 🔥)
 async function comenzarRuta(){
 
   if(alumnos.length < 1){
@@ -246,9 +246,16 @@ async function comenzarRuta(){
   // 🔥 activar modo ruta
   window.rutaActiva = true
 
-  // 🔥 usar ubicación actual del marcador (NO pedir GPS de nuevo)
+  // 🔥 esperar GPS si todavía no cargó
+  let intentos = 0
+
+  while(!markerChofer && intentos < 10){
+    await new Promise(r => setTimeout(r, 500))
+    intentos++
+  }
+
   if(!markerChofer){
-    alert("Esperando GPS...")
+    alert("El GPS no está listo todavía")
     return
   }
 
@@ -257,7 +264,6 @@ async function comenzarRuta(){
 
   try {
 
-    // 🔥 cargar alumnos UNO POR UNO (no explota el celu)
     for (let a of alumnos){
 
       let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a.direccion)}`)
@@ -283,8 +289,10 @@ async function comenzarRuta(){
 
   } catch(err){
     console.log("Error ruta:", err)
+    alert("Error al generar ruta")
   }
 }
+
 // 🔙
 function volverModo(){
   location.reload()
