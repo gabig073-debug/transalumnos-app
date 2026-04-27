@@ -15,6 +15,7 @@ const db = firebase.database();
 // 📍 VARIABLES
 let alumnos = []
 let watchID = null
+let ultimaUbicacion = null
 
 let mapChofer = null
 let markerChofer = null
@@ -78,7 +79,6 @@ function agregarAlumno(){
   }
 
   alumnos.push({nombre, direccion, telefono})
-
   db.ref("alumnos").set(alumnos)
 
   document.getElementById("nombre").value=""
@@ -124,6 +124,7 @@ function mostrarRuta(){
       ${i+1}. ${a.nombre}
       <button onclick="subir(${i})">⬆️</button>
       <button onclick="bajar(${i})">⬇️</button>
+      <button onclick="comenzarRuta()">▶️</button>
     `
 
     lista.appendChild(li)
@@ -144,52 +145,67 @@ function bajar(i){
   mostrarRuta()
 }
 
-// 📡 GPS CHOFER
+// 📡 GPS CHOFER (FIX TOTAL)
 function iniciarGPS(){
 
-if(watchID !== null) return
+  // 🔥 reiniciar SIEMPRE (clave para celular)
+  if(watchID !== null){
+    navigator.geolocation.clearWatch(watchID)
+    watchID = null
+  }
 
-if(!mapChofer){
-  mapChofer = L.map('mapa').setView([0,0], 16)
+  if(!mapChofer){
+    mapChofer = L.map('mapa').setView([0,0], 16)
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(mapChofer)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+    .addTo(mapChofer)
 
-  setTimeout(()=>mapChofer.invalidateSize(),300)
-}
+    setTimeout(()=>mapChofer.invalidateSize(),300)
+  }
 
-watchID = navigator.geolocation.watchPosition((pos)=>{
+  watchID = navigator.geolocation.watchPosition((pos)=>{
 
-  let lat = pos.coords.latitude
-  let lon = pos.coords.longitude
-  let accuracy = pos.coords.accuracy
+    let lat = pos.coords.latitude
+    let lon = pos.coords.longitude
+    let accuracy = pos.coords.accuracy
 
-  db.ref("ubicacion").set({
-    lat,
-    lon,
-    accuracy,
-    time: Date.now(),
-    token: TOKEN
+    // 🔥 GUARDAR UBICACIÓN REAL
+    ultimaUbicacion = {lat, lon}
+
+    db.ref("ubicacion").set({
+      lat,
+      lon,
+      accuracy,
+      time: Date.now(),
+      token: TOKEN
+    })
+
+    if(!markerChofer){
+      markerChofer = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapChofer)
+    }else{
+      markerChofer.setLatLng([lat, lon])
+    }
+
+    if(!circleChofer){
+      circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
+    }else{
+      circleChofer.setLatLng([lat, lon])
+      circleChofer.setRadius(accuracy)
+    }
+
+    if(!window.rutaActiva){
+      mapChofer.setView([lat, lon], 17)
+    }
+
+  },
+  (err)=>{
+    console.log("GPS error:", err)
+  },
+  {
+    enableHighAccuracy:true,
+    timeout:15000,
+    maximumAge:0
   })
-
-  if(!markerChofer){
-    markerChofer = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapChofer)
-  }else{
-    markerChofer.setLatLng([lat, lon])
-  }
-
-  if(!circleChofer){
-    circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
-  }else{
-    circleChofer.setLatLng([lat, lon])
-    circleChofer.setRadius(accuracy)
-  }
-
-  // ✅ solo centrar si no estás viendo ruta
-if(!window.rutaActiva){
-  mapChofer.setView([lat, lon], 17)
-}
-})
 }
 
 // 👨‍👩‍👧 PADRES
@@ -235,7 +251,7 @@ db.ref("ubicacion").on("value",(snap)=>{
 })
 }
 
-// 🚐 COMENZAR RUTA (ESPERA GPS REAL 🔥)
+// 🚐 COMENZAR RUTA (FIX DEFINITIVO)
 async function comenzarRuta(){
 
   if(alumnos.length < 1){
@@ -243,24 +259,16 @@ async function comenzarRuta(){
     return
   }
 
-  // 🔥 activar modo ruta
-  window.rutaActiva = true
-
-  // 🔥 esperar GPS si todavía no cargó
-  let intentos = 0
-
-  while(!markerChofer && intentos < 10){
-    await new Promise(r => setTimeout(r, 500))
-    intentos++
-  }
-
-  if(!markerChofer){
-    alert("El GPS no está listo todavía")
+  if(!ultimaUbicacion){
+    alert("Esperando GPS...")
     return
   }
 
-  let pos = markerChofer.getLatLng()
-  let puntos = [[pos.lat, pos.lng]]
+  window.rutaActiva = true
+
+  let puntos = [
+    [ultimaUbicacion.lat, ultimaUbicacion.lon]
+  ]
 
   try {
 
@@ -289,7 +297,6 @@ async function comenzarRuta(){
 
   } catch(err){
     console.log("Error ruta:", err)
-    alert("Error al generar ruta")
   }
 }
 
