@@ -14,6 +14,9 @@ const db = firebase.database();
 
 // 📍 VARIABLES
 let alumnos = []
+let alumnoPadre = null // 🔥 alumno filtrado por DNI
+let dniIngresado = null
+
 let watchID = null
 let ultimaUbicacion = null
 
@@ -30,6 +33,7 @@ let circleChofer = null
 let mapPadres = null
 let markerPadres = null
 let circlePadres = null
+let markerAlumnoPadre = null
 
 let capasAlumnos = []
 
@@ -49,7 +53,7 @@ db.ref("alumnos").on("value", (snap)=>{
 // 🔄 PANTALLAS
 function mostrar(p){
 
-  ["pantallaModo","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres","pantallaMapaSeleccion"]
+  ["pantallaModo","pantallaAlumnos","pantallaRuta","pantallaGPS","pantallaPadres","pantallaMapaSeleccion","pantallaLoginPadres"]
   .forEach(id=>{
     let el = document.getElementById(id)
     if(el) el.style.display="none"
@@ -70,8 +74,25 @@ function modoChofer(){
   mostrar("pantallaAlumnos")
 }
 
-// 👨‍👩‍👧
-function modoPadres(){
+// 🔐 LOGIN PADRES
+function ingresarPadre(){
+
+  let dni = document.getElementById("dniPadre").value
+
+  if(!dni){
+    alert("Ingresá DNI")
+    return
+  }
+
+  dniIngresado = dni
+
+  alumnoPadre = alumnos.find(a => a.dni == dni)
+
+  if(!alumnoPadre){
+    alert("DNI no encontrado")
+    return
+  }
+
   mostrar("pantallaPadres")
 }
 
@@ -81,9 +102,10 @@ function agregarAlumno(){
   let nombre = document.getElementById("nombre").value
   let direccion = document.getElementById("direccion").value
   let telefono = document.getElementById("telefono").value
+  let dni = document.getElementById("dni").value
 
-  if(!nombre || !direccion || !telefono || latSeleccion===null){
-    alert("Completá todo y seleccioná ubicación en el mapa")
+  if(!nombre || !direccion || !telefono || !dni || latSeleccion===null){
+    alert("Completá todo y seleccioná ubicación")
     return
   }
 
@@ -91,6 +113,7 @@ function agregarAlumno(){
     nombre,
     direccion,
     telefono,
+    dni,
     lat: latSeleccion,
     lon: lonSeleccion
   })
@@ -103,8 +126,9 @@ function agregarAlumno(){
   document.getElementById("nombre").value=""
   document.getElementById("direccion").value=""
   document.getElementById("telefono").value=""
+  document.getElementById("dni").value=""
 
-  alert("Alumno guardado con ubicación ✅")
+  alert("Alumno guardado ✅")
 }
 
 // 📋 LISTA
@@ -120,7 +144,8 @@ function mostrarAlumnos(){
     li.innerHTML = `
       <b>${a.nombre}</b><br>
       📍 ${a.direccion}<br>
-      📞 ${a.telefono}
+      📞 ${a.telefono}<br>
+      🆔 ${a.dni}
       <button onclick="eliminarAlumno(${i})">🗑</button>
     `
 
@@ -167,7 +192,7 @@ function bajar(i){
   mostrarRuta()
 }
 
-// 🔴 DIBUJAR ALUMNOS
+// 🔴 DIBUJAR ALUMNOS (CHOFER)
 function dibujarAlumnosEnMapa(){
 
   if(!mapChofer) return
@@ -176,7 +201,6 @@ function dibujarAlumnosEnMapa(){
   capasAlumnos = []
 
   alumnos.forEach(a=>{
-
     if(a.lat && a.lon){
 
       let circulo = L.circle([a.lat, a.lon], {
@@ -186,14 +210,8 @@ function dibujarAlumnosEnMapa(){
         fillOpacity: 0.5
       }).addTo(mapChofer)
 
-      let popup = L.marker([a.lat, a.lon])
-        .bindPopup(`<b>${a.nombre}</b><br>${a.direccion}`)
-        .addTo(mapChofer)
-
       capasAlumnos.push(circulo)
-      capasAlumnos.push(popup)
     }
-
   })
 }
 
@@ -249,61 +267,69 @@ function iniciarGPS(){
 
     dibujarAlumnosEnMapa()
 
-  },
-  (err)=>{
-    console.log("GPS error:", err)
-  },
-  {
-    enableHighAccuracy:true,
-    timeout:15000,
-    maximumAge:0
   })
 }
 
-// 👨‍👩‍👧 PADRES
+// 👨‍👩‍👧 PADRES (FILTRADO 🔥)
 function iniciarPadres(){
 
-if(mapPadres){
-  mapPadres.remove()
-  mapPadres=null
-  markerPadres=null
-  circlePadres=null
-}
-
-mapPadres = L.map('mapaPadres').setView([0,0], 16)
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
-
-setTimeout(()=>mapPadres.invalidateSize(),300)
-
-db.ref("ubicacion").on("value",(snap)=>{
-
-  let data = snap.val()
-  if(!data) return
-
-  let lat = data.lat
-  let lon = data.lon
-  let accuracy = data.accuracy || 20
-
-  if(!markerPadres){
-    markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
-  }else{
-    markerPadres.setLatLng([lat, lon])
+  if(!alumnoPadre){
+    alert("Primero ingresá DNI")
+    mostrar("pantallaLoginPadres")
+    return
   }
 
-  if(!circlePadres){
-    circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
-  }else{
-    circlePadres.setLatLng([lat, lon])
-    circlePadres.setRadius(accuracy)
+  if(mapPadres){
+    mapPadres.remove()
   }
 
-  mapPadres.setView([lat, lon], 17)
+  mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-})
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
+
+  setTimeout(()=>mapPadres.invalidateSize(),300)
+
+  db.ref("ubicacion").on("value",(snap)=>{
+
+    let data = snap.val()
+    if(!data) return
+
+    let lat = data.lat
+    let lon = data.lon
+    let accuracy = data.accuracy || 20
+
+    if(!markerPadres){
+      markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
+    }else{
+      markerPadres.setLatLng([lat, lon])
+    }
+
+    if(!circlePadres){
+      circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
+    }else{
+      circlePadres.setLatLng([lat, lon])
+      circlePadres.setRadius(accuracy)
+    }
+
+    // 🔴 SOLO SU HIJO
+    if(alumnoPadre.lat && alumnoPadre.lon){
+
+      if(!markerAlumnoPadre){
+        markerAlumnoPadre = L.circle([alumnoPadre.lat, alumnoPadre.lon], {
+          radius: 30,
+          color: "red",
+          fillColor: "red",
+          fillOpacity: 0.6
+        }).addTo(mapPadres)
+      }
+    }
+
+    mapPadres.setView([lat, lon], 17)
+
+  })
 }
 
-// 🚐 RUTA REAL
+// 🚐 RUTA
 async function comenzarRuta(){
 
   if(alumnos.length < 1 || !ultimaUbicacion){
@@ -371,7 +397,7 @@ function iniciarMapaSeleccion(){
 
 function guardarUbicacion(){
   if(latSeleccion===null){
-    alert("Tocá el mapa primero")
+    alert("Tocá el mapa")
     return
   }
 
