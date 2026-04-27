@@ -62,7 +62,22 @@ html, body {
   <h2>Elegir modo</h2>
 
   <button onclick="modoChofer()">🚐 Chofer</button>
-  <button onclick="modoPadres()">👨‍👩‍👧 Padres</button>
+  <button onclick="mostrar('pantallaLoginPadres')">👨‍👩‍👧 Padres</button>
+</div>
+
+<!-- 🔐 LOGIN PADRES -->
+<div id="pantallaLoginPadres" style="display:none">
+
+  <h2>Ingreso Padres</h2>
+
+  <input id="dniPadre" placeholder="Ingresar DNI">
+
+  <br><br>
+
+  <button onclick="ingresarPadre()">Ingresar</button>
+
+  <button onclick="volverModo()">🔙 Volver</button>
+
 </div>
 
 <!-- 👦 ALUMNOS -->
@@ -73,10 +88,10 @@ html, body {
   <input id="nombre" placeholder="Nombre">
   <input id="direccion" placeholder="Dirección">
   <input id="telefono" placeholder="Teléfono">
+  <input id="dni" placeholder="DNI del padre">
 
   <br><br>
 
-  <!-- 🔥 BOTON NUEVO -->
   <button onclick="abrirMapaSeleccion()">📍 Elegir ubicación en mapa</button>
 
   <button onclick="agregarAlumno()">Guardar</button>
