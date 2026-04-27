@@ -185,8 +185,10 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
     circleChofer.setRadius(accuracy)
   }
 
+  // ✅ solo centrar si no estás viendo ruta
+if(!window.rutaActiva){
   mapChofer.setView([lat, lon], 17)
-
+}
 })
 }
 
