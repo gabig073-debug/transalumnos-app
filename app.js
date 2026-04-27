@@ -153,41 +153,49 @@ function bajar(i){
 // 📡 GPS CHOFER
 function iniciarGPS(){
 
-if(mapChofer){
-  mapChofer.remove()
-  mapChofer=null
-  markerChofer=null
-  circleChofer=null
+// 🔥 NO reiniciar si ya está activo
+if(watchID !== null) return
+
+// 🗺 crear mapa UNA sola vez
+if(!mapChofer){
+  mapChofer = L.map('mapa').setView([0,0], 16)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(mapChofer)
+
+  setTimeout(()=>{
+    mapChofer.invalidateSize()
+  },300)
 }
 
-mapChofer = L.map('mapa').setView([0,0], 16)
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapChofer)
-
-setTimeout(()=>mapChofer.invalidateSize(),300)
-
-if(watchID!==null){
-  navigator.geolocation.clearWatch(watchID)
-}
-
+// 📡 iniciar GPS UNA sola vez
 watchID = navigator.geolocation.watchPosition((pos)=>{
 
   let lat = pos.coords.latitude
   let lon = pos.coords.longitude
   let accuracy = pos.coords.accuracy
 
+  // 🔥 guardar en firebase
   db.ref("ubicacion").set({
-    lat,lon,accuracy,time:Date.now(),token:TOKEN
+    lat,
+    lon,
+    accuracy,
+    time: Date.now(),
+    token: TOKEN
   })
 
+  // 🚐 marcador
   if(!markerChofer){
-    markerChofer = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapChofer)
+    markerChofer = L.marker([lat, lon], {icon: iconoColectivo})
+    .addTo(mapChofer)
   }else{
     markerChofer.setLatLng([lat, lon])
   }
 
+  // 🔵 círculo
   if(!circleChofer){
-    circleChofer = L.circle([lat, lon], {radius: accuracy}).addTo(mapChofer)
+    circleChofer = L.circle([lat, lon], {radius: accuracy})
+    .addTo(mapChofer)
   }else{
     circleChofer.setLatLng([lat, lon])
     circleChofer.setRadius(accuracy)
@@ -195,6 +203,14 @@ watchID = navigator.geolocation.watchPosition((pos)=>{
 
   mapChofer.setView([lat, lon], 17)
 
+},
+(err)=>{
+  console.log("GPS error:", err)
+},
+{
+  enableHighAccuracy:true,
+  timeout:10000,
+  maximumAge:0
 })
 
 }
