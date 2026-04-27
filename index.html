@@ -31,9 +31,21 @@ html, body {
   height: 100vh;
 }
 
-#mapa, #mapaPadres {
+#mapa, #mapaPadres, #mapaSeleccion {
   height: 100vh;
   width: 100%;
+}
+
+.panel-chofer {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+.panel-chofer button {
+  margin: 5px;
+  padding: 10px;
 }
 </style>
 
@@ -62,12 +74,31 @@ html, body {
   <input id="direccion" placeholder="Dirección">
   <input id="telefono" placeholder="Teléfono">
 
+  <br><br>
+
+  <!-- 🔥 BOTON NUEVO -->
+  <button onclick="abrirMapaSeleccion()">📍 Elegir ubicación en mapa</button>
+
   <button onclick="agregarAlumno()">Guardar</button>
+
+  <p id="ubicacionElegida" style="font-size:12px;"></p>
 
   <ul id="lista"></ul>
 
   <button onclick="mostrar('pantallaRuta')">🛣 Ir a Ruta</button>
   <button onclick="mostrar('pantallaGPS')">📡 Ir al GPS</button>
+
+</div>
+
+<!-- 🗺 SELECCIONAR UBICACION -->
+<div id="pantallaMapaSeleccion" style="display:none">
+
+  <div class="panel-chofer">
+    <button onclick="guardarUbicacion()">✅ Confirmar</button>
+    <button onclick="mostrar('pantallaAlumnos')">❌ Cancelar</button>
+  </div>
+
+  <div id="mapaSeleccion"></div>
 
 </div>
 
