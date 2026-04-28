@@ -15,7 +15,6 @@ const db = firebase.database();
 // 📍 VARIABLES
 let alumnos = []
 let alumnoPadre = null
-let dniIngresado = null
 
 let watchID = null
 let ultimaUbicacion = null
@@ -37,6 +36,7 @@ let markerAlumnoPadre = null
 let rutaPadres = null
 
 let capasAlumnos = []
+let alumnosDibujados = false // 🔥 FIX PERFORMANCE
 
 // 🚐 ICONO
 const iconoColectivo = L.icon({
@@ -45,12 +45,14 @@ const iconoColectivo = L.icon({
   iconAnchor: [28, 28]
 })
 
-// 🔥 CARGAR ALUMNOS (FIX 🔥)
+// 🔥 CARGAR ALUMNOS
 db.ref("alumnos").on("value", (snap)=>{
   alumnos = snap.val() || []
 
   mostrarAlumnos()
-  mostrarRuta() // 🔥 clave
+  mostrarRuta()
+
+  alumnosDibujados = false // 🔥 redibuja solo cuando cambian
 })
 
 // 🔄 PANTALLAS
@@ -79,7 +81,6 @@ function modoChofer(){
 
 // 🔐 LOGIN PADRES
 function ingresarPadre(){
-
   let dni = document.getElementById("dniPadre").value
 
   if(!dni){
@@ -160,7 +161,7 @@ function eliminarAlumno(i){
   db.ref("alumnos").set(alumnos)
 }
 
-// 🛣 RUTA (FIX 🔥)
+// 🛣 RUTA
 function mostrarRuta(){
 
   let lista = document.getElementById("listaRuta")
@@ -169,7 +170,6 @@ function mostrarRuta(){
   lista.innerHTML = ""
 
   alumnos.forEach((a,i)=>{
-
     let li = document.createElement("li")
 
     li.innerHTML = `
@@ -185,7 +185,6 @@ function mostrarRuta(){
 // 🔼
 function subir(i){
   if(i===0) return
-
   [alumnos[i], alumnos[i-1]] = [alumnos[i-1], alumnos[i]]
   db.ref("alumnos").set(alumnos)
 }
@@ -193,12 +192,11 @@ function subir(i){
 // 🔽
 function bajar(i){
   if(i===alumnos.length-1) return
-
   [alumnos[i], alumnos[i+1]] = [alumnos[i+1], alumnos[i]]
   db.ref("alumnos").set(alumnos)
 }
 
-// 🔴 DIBUJAR ALUMNOS
+// 🔴 DIBUJAR ALUMNOS (UNA SOLA VEZ)
 function dibujarAlumnosEnMapa(){
 
   if(!mapChofer) return
@@ -221,7 +219,7 @@ function dibujarAlumnosEnMapa(){
   })
 }
 
-// 📡 GPS CHOFER
+// 📡 GPS CHOFER (OPTIMIZADO 🔥)
 function iniciarGPS(){
 
   if(watchID !== null){
@@ -236,6 +234,12 @@ function iniciarGPS(){
     .addTo(mapChofer)
 
     setTimeout(()=>mapChofer.invalidateSize(),300)
+  }
+
+  // 🔥 dibujar alumnos SOLO UNA VEZ
+  if(!alumnosDibujados){
+    dibujarAlumnosEnMapa()
+    alumnosDibujados = true
   }
 
   watchID = navigator.geolocation.watchPosition((pos)=>{
@@ -271,12 +275,16 @@ function iniciarGPS(){
       mapChofer.setView([lat, lon], 17)
     }
 
-    dibujarAlumnosEnMapa()
-
+  },
+  (err)=>console.log("GPS error:", err),
+  {
+    enableHighAccuracy:true,
+    timeout:15000,
+    maximumAge:0
   })
 }
 
-// 👨‍👩‍👧 PADRES CON RUTA 🔥
+// 👨‍👩‍👧 PADRES OPTIMIZADO 🔥
 function iniciarPadres(){
 
   if(!alumnoPadre){
@@ -295,7 +303,7 @@ function iniciarPadres(){
 
   setTimeout(()=>mapPadres.invalidateSize(),300)
 
-  let ultimaRutaTime = 0 // 🔥 control de frecuencia
+  let ultimaRutaTime = 0
 
   db.ref("ubicacion").on("value",(snap)=>{
 
@@ -306,7 +314,6 @@ function iniciarPadres(){
     let lon = data.lon
     let accuracy = data.accuracy || 20
 
-    // 🚐 COLECTIVO (esto sí es en tiempo real)
     if(!markerPadres){
       markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
     }else{
@@ -320,7 +327,6 @@ function iniciarPadres(){
       circlePadres.setRadius(accuracy)
     }
 
-    // 🔴 CASA DEL ALUMNO
     if(alumnoPadre.lat && alumnoPadre.lon){
 
       if(!markerAlumnoPadre){
@@ -332,7 +338,6 @@ function iniciarPadres(){
         }).addTo(mapPadres)
       }
 
-      // 🔥 SOLO recalcular cada 5 segundos
       let ahora = Date.now()
 
       if(ahora - ultimaRutaTime > 5000){
