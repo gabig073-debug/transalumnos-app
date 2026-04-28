@@ -290,9 +290,12 @@ function iniciarPadres(){
 
   mapPadres = L.map('mapaPadres').setView([0,0], 16)
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapPadres)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  .addTo(mapPadres)
 
   setTimeout(()=>mapPadres.invalidateSize(),300)
+
+  let ultimaRutaTime = 0 // 🔥 control de frecuencia
 
   db.ref("ubicacion").on("value",(snap)=>{
 
@@ -303,6 +306,7 @@ function iniciarPadres(){
     let lon = data.lon
     let accuracy = data.accuracy || 20
 
+    // 🚐 COLECTIVO (esto sí es en tiempo real)
     if(!markerPadres){
       markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
     }else{
@@ -316,6 +320,7 @@ function iniciarPadres(){
       circlePadres.setRadius(accuracy)
     }
 
+    // 🔴 CASA DEL ALUMNO
     if(alumnoPadre.lat && alumnoPadre.lon){
 
       if(!markerAlumnoPadre){
@@ -327,24 +332,32 @@ function iniciarPadres(){
         }).addTo(mapPadres)
       }
 
-      let coords = [
-        `${lon},${lat}`,
-        `${alumnoPadre.lon},${alumnoPadre.lat}`
-      ]
+      // 🔥 SOLO recalcular cada 5 segundos
+      let ahora = Date.now()
 
-      fetch(`https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`)
-      .then(res=>res.json())
-      .then(data=>{
+      if(ahora - ultimaRutaTime > 5000){
 
-        let rutaCoords = data.routes[0].geometry.coordinates
-        let latlngs = rutaCoords.map(c => [c[1], c[0]])
+        ultimaRutaTime = ahora
 
-        if(rutaPadres){
-          mapPadres.removeLayer(rutaPadres)
-        }
+        let coords = [
+          `${lon},${lat}`,
+          `${alumnoPadre.lon},${alumnoPadre.lat}`
+        ]
 
-        rutaPadres = L.polyline(latlngs, {weight:5}).addTo(mapPadres)
-      })
+        fetch(`https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`)
+        .then(res=>res.json())
+        .then(data=>{
+
+          let rutaCoords = data.routes[0].geometry.coordinates
+          let latlngs = rutaCoords.map(c => [c[1], c[0]])
+
+          if(rutaPadres){
+            mapPadres.removeLayer(rutaPadres)
+          }
+
+          rutaPadres = L.polyline(latlngs, {weight:5}).addTo(mapPadres)
+        })
+      }
     }
 
     mapPadres.setView([lat, lon], 16)
