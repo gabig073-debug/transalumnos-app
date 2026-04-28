@@ -14,7 +14,7 @@ const db = firebase.database();
 
 // 📍 VARIABLES
 let alumnos = []
-let alumnoPadre = null // 🔥 alumno filtrado por DNI
+let alumnoPadre = null
 let dniIngresado = null
 
 let watchID = null
@@ -34,6 +34,7 @@ let mapPadres = null
 let markerPadres = null
 let circlePadres = null
 let markerAlumnoPadre = null
+let rutaPadres = null
 
 let capasAlumnos = []
 
@@ -84,8 +85,6 @@ function ingresarPadre(){
     return
   }
 
-  dniIngresado = dni
-
   alumnoPadre = alumnos.find(a => a.dni == dni)
 
   if(!alumnoPadre){
@@ -105,7 +104,7 @@ function agregarAlumno(){
   let dni = document.getElementById("dni").value
 
   if(!nombre || !direccion || !telefono || !dni || latSeleccion===null){
-    alert("Completá todo y seleccioná ubicación")
+    alert("Completá todo")
     return
   }
 
@@ -157,39 +156,6 @@ function mostrarAlumnos(){
 function eliminarAlumno(i){
   alumnos.splice(i,1)
   db.ref("alumnos").set(alumnos)
-}
-
-// 🛣 RUTA
-function mostrarRuta(){
-
-  let lista = document.getElementById("listaRuta")
-  lista.innerHTML=""
-
-  alumnos.forEach((a,i)=>{
-    let li = document.createElement("li")
-
-    li.innerHTML = `
-      ${i+1}. ${a.nombre}
-      <button onclick="subir(${i})">⬆️</button>
-      <button onclick="bajar(${i})">⬇️</button>
-    `
-
-    lista.appendChild(li)
-  })
-}
-
-function subir(i){
-  if(i===0) return
-  [alumnos[i], alumnos[i-1]] = [alumnos[i-1], alumnos[i]]
-  db.ref("alumnos").set(alumnos)
-  mostrarRuta()
-}
-
-function bajar(i){
-  if(i===alumnos.length-1) return
-  [alumnos[i], alumnos[i+1]] = [alumnos[i+1], alumnos[i]]
-  db.ref("alumnos").set(alumnos)
-  mostrarRuta()
 }
 
 // 🔴 DIBUJAR ALUMNOS (CHOFER)
@@ -270,11 +236,10 @@ function iniciarGPS(){
   })
 }
 
-// 👨‍👩‍👧 PADRES (FILTRADO 🔥)
+// 👨‍👩‍👧 PADRES (🔥 CON RUTA)
 function iniciarPadres(){
 
   if(!alumnoPadre){
-    alert("Primero ingresá DNI")
     mostrar("pantallaLoginPadres")
     return
   }
@@ -298,6 +263,7 @@ function iniciarPadres(){
     let lon = data.lon
     let accuracy = data.accuracy || 20
 
+    // 🚐 Colectivo
     if(!markerPadres){
       markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
     }else{
@@ -311,7 +277,7 @@ function iniciarPadres(){
       circlePadres.setRadius(accuracy)
     }
 
-    // 🔴 SOLO SU HIJO
+    // 🔴 Alumno (solo uno)
     if(alumnoPadre.lat && alumnoPadre.lon){
 
       if(!markerAlumnoPadre){
@@ -324,46 +290,32 @@ function iniciarPadres(){
       }
     }
 
-    mapPadres.setView([lat, lon], 17)
+    // 🛣 DIBUJAR RUTA HASTA SU CASA
+    if(alumnoPadre.lat && alumnoPadre.lon){
 
-  })
-}
+      let coords = [
+        `${lon},${lat}`,
+        `${alumnoPadre.lon},${alumnoPadre.lat}`
+      ]
 
-// 🚐 RUTA
-async function comenzarRuta(){
+      fetch(`https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`)
+      .then(res=>res.json())
+      .then(data=>{
 
-  if(alumnos.length < 1 || !ultimaUbicacion){
-    alert("Falta GPS o alumnos")
-    return
-  }
+        let rutaCoords = data.routes[0].geometry.coordinates
+        let latlngs = rutaCoords.map(c => [c[1], c[0]])
 
-  window.rutaActiva = true
+        if(rutaPadres){
+          mapPadres.removeLayer(rutaPadres)
+        }
 
-  let coords = [`${ultimaUbicacion.lon},${ultimaUbicacion.lat}`]
-
-  alumnos.forEach(a=>{
-    if(a.lat && a.lon){
-      coords.push(`${a.lon},${a.lat}`)
+        rutaPadres = L.polyline(latlngs, {weight:5}).addTo(mapPadres)
+      })
     }
+
+    mapPadres.setView([lat, lon], 16)
+
   })
-
-  let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
-
-  let res = await fetch(url)
-  let data = await res.json()
-
-  let rutaCoords = data.routes[0].geometry.coordinates
-  let latlngs = rutaCoords.map(c => [c[1], c[0]])
-
-  if(window.rutaLinea){
-    mapChofer.removeLayer(window.rutaLinea)
-  }
-
-  window.rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
-
-  mapChofer.fitBounds(window.rutaLinea.getBounds())
-
-  dibujarAlumnosEnMapa()
 }
 
 // 📍 MAPA SELECCIÓN
