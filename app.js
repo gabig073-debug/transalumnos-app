@@ -36,7 +36,12 @@ let markerAlumnoPadre = null
 let rutaPadres = null
 
 let capasAlumnos = []
-let alumnosDibujados = false // 🔥 FIX PERFORMANCE
+let alumnosDibujados = false
+
+// 🔥 GPS PRO
+let indiceRuta = 0
+let rutaLinea = null
+let ultimaRecalculo = 0
 
 // 🚐 ICONO
 const iconoColectivo = L.icon({
@@ -52,7 +57,7 @@ db.ref("alumnos").on("value", (snap)=>{
   mostrarAlumnos()
   mostrarRuta()
 
-  alumnosDibujados = false // 🔥 redibuja solo cuando cambian
+  alumnosDibujados = false
 })
 
 // 🔄 PANTALLAS
@@ -163,11 +168,10 @@ function eliminarAlumno(i){
 
 // 🛣 RUTA
 function mostrarRuta(){
-
   let lista = document.getElementById("listaRuta")
   if(!lista) return
 
-  lista.innerHTML = ""
+  lista.innerHTML=""
 
   alumnos.forEach((a,i)=>{
     let li = document.createElement("li")
@@ -196,7 +200,7 @@ function bajar(i){
   db.ref("alumnos").set(alumnos)
 }
 
-// 🔴 DIBUJAR ALUMNOS (UNA SOLA VEZ)
+// 🔴 DIBUJAR ALUMNOS
 function dibujarAlumnosEnMapa(){
 
   if(!mapChofer) return
@@ -219,7 +223,7 @@ function dibujarAlumnosEnMapa(){
   })
 }
 
-// 📡 GPS CHOFER (OPTIMIZADO 🔥)
+// 📡 GPS CHOFER
 function iniciarGPS(){
 
   if(watchID !== null){
@@ -236,7 +240,6 @@ function iniciarGPS(){
     setTimeout(()=>mapChofer.invalidateSize(),300)
   }
 
-  // 🔥 dibujar alumnos SOLO UNA VEZ
   if(!alumnosDibujados){
     dibujarAlumnosEnMapa()
     alumnosDibujados = true
@@ -275,6 +278,33 @@ function iniciarGPS(){
       mapChofer.setView([lat, lon], 17)
     }
 
+    // 🔥 GPS DINÁMICO
+    if(window.rutaActiva && ultimaUbicacion){
+
+      let destino = alumnos[indiceRuta]
+
+      if(destino){
+
+        let dist = distanciaMetros(ultimaUbicacion, {
+          lat: destino.lat,
+          lon: destino.lon
+        })
+
+        if(dist < 50){
+          indiceRuta++
+          calcularRutaActual()
+          return
+        }
+
+        let ahora = Date.now()
+
+        if(ahora - ultimaRecalculo > 4000){
+          ultimaRecalculo = ahora
+          calcularRutaActual()
+        }
+      }
+    }
+
   },
   (err)=>console.log("GPS error:", err),
   {
@@ -284,90 +314,71 @@ function iniciarGPS(){
   })
 }
 
-// 👨‍👩‍👧 PADRES OPTIMIZADO 🔥
-function iniciarPadres(){
+// 📏 DISTANCIA
+function distanciaMetros(a, b){
+  let R = 6371000
+  let dLat = (b.lat - a.lat) * Math.PI/180
+  let dLon = (b.lon - a.lon) * Math.PI/180
 
-  if(!alumnoPadre){
-    mostrar("pantallaLoginPadres")
+  let lat1 = a.lat * Math.PI/180
+  let lat2 = b.lat * Math.PI/180
+
+  let x = dLon * Math.cos((lat1+lat2)/2)
+  let d = Math.sqrt(dLat*dLat + x*x) * R
+
+  return d
+}
+
+// 🚐 COMENZAR RUTA
+function comenzarRuta(){
+
+  if(alumnos.length === 0){
+    alert("No hay alumnos")
     return
   }
 
-  if(mapPadres){
-    mapPadres.remove()
+  indiceRuta = 0
+  window.rutaActiva = true
+
+  calcularRutaActual()
+}
+
+// 🧠 CALCULAR RUTA
+async function calcularRutaActual(){
+
+  if(!ultimaUbicacion) return
+
+  if(indiceRuta >= alumnos.length){
+    alert("Ruta terminada ✅")
+    window.rutaActiva = false
+
+    if(rutaLinea){
+      mapChofer.removeLayer(rutaLinea)
+    }
+
+    return
   }
 
-  mapPadres = L.map('mapaPadres').setView([0,0], 16)
+  let destino = alumnos[indiceRuta]
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-  .addTo(mapPadres)
+  let coords = [
+    `${ultimaUbicacion.lon},${ultimaUbicacion.lat}`,
+    `${destino.lon},${destino.lat}`
+  ]
 
-  setTimeout(()=>mapPadres.invalidateSize(),300)
+  let url = `https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`
 
-  let ultimaRutaTime = 0
+  let res = await fetch(url)
+  let data = await res.json()
 
-  db.ref("ubicacion").on("value",(snap)=>{
+  let rutaCoords = data.routes[0].geometry.coordinates
+  let latlngs = rutaCoords.map(c => [c[1], c[0]])
 
-    let data = snap.val()
-    if(!data) return
+  if(rutaLinea){
+    mapChofer.removeLayer(rutaLinea)
+  }
 
-    let lat = data.lat
-    let lon = data.lon
-    let accuracy = data.accuracy || 20
-
-    if(!markerPadres){
-      markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
-    }else{
-      markerPadres.setLatLng([lat, lon])
-    }
-
-    if(!circlePadres){
-      circlePadres = L.circle([lat, lon], {radius: accuracy}).addTo(mapPadres)
-    }else{
-      circlePadres.setLatLng([lat, lon])
-      circlePadres.setRadius(accuracy)
-    }
-
-    if(alumnoPadre.lat && alumnoPadre.lon){
-
-      if(!markerAlumnoPadre){
-        markerAlumnoPadre = L.circle([alumnoPadre.lat, alumnoPadre.lon], {
-          radius: 30,
-          color: "red",
-          fillColor: "red",
-          fillOpacity: 0.6
-        }).addTo(mapPadres)
-      }
-
-      let ahora = Date.now()
-
-      if(ahora - ultimaRutaTime > 5000){
-
-        ultimaRutaTime = ahora
-
-        let coords = [
-          `${lon},${lat}`,
-          `${alumnoPadre.lon},${alumnoPadre.lat}`
-        ]
-
-        fetch(`https://router.project-osrm.org/route/v1/driving/${coords.join(";")}?overview=full&geometries=geojson`)
-        .then(res=>res.json())
-        .then(data=>{
-
-          let rutaCoords = data.routes[0].geometry.coordinates
-          let latlngs = rutaCoords.map(c => [c[1], c[0]])
-
-          if(rutaPadres){
-            mapPadres.removeLayer(rutaPadres)
-          }
-
-          rutaPadres = L.polyline(latlngs, {weight:5}).addTo(mapPadres)
-        })
-      }
-    }
-
-    mapPadres.setView([lat, lon], 16)
-
-  })
+  rutaLinea = L.polyline(latlngs, {weight:5}).addTo(mapChofer)
 }
 
 // 📍 MAPA SELECCIÓN
