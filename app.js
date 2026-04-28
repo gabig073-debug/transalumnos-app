@@ -45,10 +45,12 @@ const iconoColectivo = L.icon({
   iconAnchor: [28, 28]
 })
 
-// 🔥 CARGAR ALUMNOS
+// 🔥 CARGAR ALUMNOS (FIX 🔥)
 db.ref("alumnos").on("value", (snap)=>{
   alumnos = snap.val() || []
+
   mostrarAlumnos()
+  mostrarRuta() // 🔥 clave
 })
 
 // 🔄 PANTALLAS
@@ -158,7 +160,45 @@ function eliminarAlumno(i){
   db.ref("alumnos").set(alumnos)
 }
 
-// 🔴 DIBUJAR ALUMNOS (CHOFER)
+// 🛣 RUTA (FIX 🔥)
+function mostrarRuta(){
+
+  let lista = document.getElementById("listaRuta")
+  if(!lista) return
+
+  lista.innerHTML = ""
+
+  alumnos.forEach((a,i)=>{
+
+    let li = document.createElement("li")
+
+    li.innerHTML = `
+      ${i+1}. ${a.nombre}
+      <button onclick="subir(${i})">⬆️</button>
+      <button onclick="bajar(${i})">⬇️</button>
+    `
+
+    lista.appendChild(li)
+  })
+}
+
+// 🔼
+function subir(i){
+  if(i===0) return
+
+  [alumnos[i], alumnos[i-1]] = [alumnos[i-1], alumnos[i]]
+  db.ref("alumnos").set(alumnos)
+}
+
+// 🔽
+function bajar(i){
+  if(i===alumnos.length-1) return
+
+  [alumnos[i], alumnos[i+1]] = [alumnos[i+1], alumnos[i]]
+  db.ref("alumnos").set(alumnos)
+}
+
+// 🔴 DIBUJAR ALUMNOS
 function dibujarAlumnosEnMapa(){
 
   if(!mapChofer) return
@@ -236,7 +276,7 @@ function iniciarGPS(){
   })
 }
 
-// 👨‍👩‍👧 PADRES (🔥 CON RUTA)
+// 👨‍👩‍👧 PADRES CON RUTA 🔥
 function iniciarPadres(){
 
   if(!alumnoPadre){
@@ -263,7 +303,6 @@ function iniciarPadres(){
     let lon = data.lon
     let accuracy = data.accuracy || 20
 
-    // 🚐 Colectivo
     if(!markerPadres){
       markerPadres = L.marker([lat, lon], {icon: iconoColectivo}).addTo(mapPadres)
     }else{
@@ -277,7 +316,6 @@ function iniciarPadres(){
       circlePadres.setRadius(accuracy)
     }
 
-    // 🔴 Alumno (solo uno)
     if(alumnoPadre.lat && alumnoPadre.lon){
 
       if(!markerAlumnoPadre){
@@ -288,10 +326,6 @@ function iniciarPadres(){
           fillOpacity: 0.6
         }).addTo(mapPadres)
       }
-    }
-
-    // 🛣 DIBUJAR RUTA HASTA SU CASA
-    if(alumnoPadre.lat && alumnoPadre.lon){
 
       let coords = [
         `${lon},${lat}`,
